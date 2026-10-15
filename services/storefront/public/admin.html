@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TinyCars - garage control room</title>
+  <meta name="robots" content="noindex">
+  <style>
+    :root{--bg:#0e1117;--panel:#161b24;--line:#283042;--txt:#d7dde8;--dim:#8a94a7;--acc:#f6c945;--ok:#3ddc84;--bad:#ff5d5d;--warn:#ffb020}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+    header h1{font-size:16px;margin:0;color:var(--acc);letter-spacing:.08em}
+    header a{color:var(--dim);margin-left:auto;text-decoration:none}
+    main{max-width:1100px;margin:0 auto;padding:20px 22px 60px;display:grid;gap:18px}
+    section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+    h2{margin:0 0 12px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+    button,select,input{font:inherit;background:#0b0f16;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+    button{cursor:pointer}button:hover{border-color:var(--acc)}
+    button.primary{background:var(--acc);color:#111;border-color:var(--acc);font-weight:700}
+    button.danger{border-color:var(--bad);color:var(--bad)}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--bad);margin-right:6px}.dot.up{background:var(--ok)}
+    .pat{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+    .pat:first-of-type{border-top:0}
+    .pat b{color:var(--txt)}.pat small{display:block;color:var(--dim)}
+    .badge{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+    .sw{position:relative;width:44px;height:24px;background:#2a3142;border-radius:999px;cursor:pointer;border:0;padding:0}
+    .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#8a94a7;transition:.15s}
+    .sw.on{background:var(--bad)}.sw.on::after{left:23px;background:#fff}
+    .grp{color:var(--acc);margin:14px 0 2px;font-size:12px;letter-spacing:.1em}
+    #events div{padding:3px 0;border-top:1px solid var(--line);color:var(--dim)}#events div:first-child{border-top:0}
+    #events .ENABLED{color:var(--bad)}#events .DISABLED{color:var(--ok)}
+    input[type=range]{width:240px;padding:0}
+    #gate{max-width:360px;margin:12vh auto;text-align:center}
+    .hide{display:none}
+  </style>
+</head>
+<body>
+  <section id="gate"><h2>Garage control room</h2>
+    <p class="row" style="justify-content:center"><input id="tok" type="password" placeholder="admin token"><button class="primary" id="go">Enter</button></p>
+    <div id="gateMsg" style="color:var(--bad)"></div></section>
+  <div id="app" class="hide">
+    <header><h1>TINYCARS // CONTROL ROOM</h1><span id="health"></span><a href="/">&larr; back to the shop</a></header>
+    <main>
+      <section><h2>Load generator</h2>
+        <div class="row" style="margin-bottom:12px">
+          <button id="lStart" class="primary">Start</button><button id="lStop">Stop</button>
+          <span>presets:</span>
+          <button data-rpm="6">Quiet (6/min)</button><button data-rpm="30">Normal (30/min)</button><button data-rpm="180">Black Friday (180/min)</button>
+        </div>
+        <div class="row"><label>sessions/min <input id="rpm" type="range" min="0" max="300" step="2"> <b id="rpmV"></b></label>
+          <label>web vs in-store <input id="web" type="range" min="0" max="100" step="5"> <b id="webV"></b>% web</label>
+          <span id="lState" class="badge"></span></div>
+      </section>
+      <section><h2>Problem patterns</h2><div id="patterns"></div>
+        <div class="row" style="margin-top:12px"><button class="danger" id="reset">All patterns off</button>
+          <span class="badge">level 1-5 scales delay / error rate / burst size</span></div></section>
+      <section><h2>Recent events</h2><div id="events"></div></section>
+    </main>
+  </div>
+  <script src="/admin.js"></script>
+</body>
+</html>

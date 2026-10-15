@@ -1,0 +1,6 @@
+apiVersion: v2
+name: tinycars
+description: TinyCars - a toy-car storefront observability test bed (OTel Operator auto-instrumentation + Bindplane)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

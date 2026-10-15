@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tinycars-config
+  labels:
+    app.kubernetes.io/part-of: tinycars
+data:
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_NAME: {{ .Values.postgres.database | quote }}
+  DB_USER: {{ .Values.postgres.user | quote }}
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_URL: "redis://redis:6379/0"
+  CATALOG_URL: "http://catalog:8081"
+  CART_URL: "http://cart-checkout:8082"
+  INVENTORY_URL: "http://inventory:8083"
+  STOREFRONT_URL: "http://storefront:8080"
+  # Where telemetry goes: your Bindplane collector. The Operator's Instrumentation CR uses the same value.
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.otel.endpoint | quote }}
+  OTEL_EXPORTER_OTLP_PROTOCOL: {{ .Values.otel.protocol | quote }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tinycars-secrets
+  labels:
+    app.kubernetes.io/part-of: tinycars
+type: Opaque
+stringData:
+  DB_PASSWORD: {{ .Values.postgres.password | quote }}
+  ADMIN_TOKEN: {{ .Values.adminToken | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tinycars-db-init
+  labels:
+    app.kubernetes.io/part-of: tinycars
+data:
+  01-schema.sql: |
+{{ .Files.Get "files/schema.sql" | indent 4 }}
+  02-seed.sql: |
+{{ .Files.Get "files/seed.sql" | indent 4 }}

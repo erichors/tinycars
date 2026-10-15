@@ -1,0 +1,95 @@
+# TinyCars chart values. The only environment-specific settings are image.registry and otel.endpoint.
+
+image:
+  registry: ""            # e.g. "123456789012.dkr.ecr.us-east-1.amazonaws.com/" (note trailing slash)
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+otel:
+  # OTLP/HTTP endpoint of your Bindplane collector as reachable from this cluster.
+  # Find it with: kubectl get svc -A | grep -i -E 'bindplane|observiq'
+  endpoint: "http://bindplane-node-agent.bindplane-agent.svc.cluster.local:4318"
+  protocol: "http/protobuf"
+  environment: "demo"     # deployment.environment resource attribute
+  instrumentation:
+    create: true          # create the Instrumentation CR (requires the OpenTelemetry Operator)
+    enabled: true         # annotate workloads so the Operator injects the language agent
+    samplerArgument: "1"  # 1 = keep 100% of traces
+
+adminToken: "tinycars"    # token for the hidden /admin panel (change it)
+
+postgres:
+  image: postgres:16-alpine
+  user: tinycars
+  password: tinycars
+  database: tinycars
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""      # "" = cluster default
+
+redis:
+  image: redis:7-alpine
+
+# One entry per service. Adding a module = add an entry (see README "Add a new service").
+services:
+  storefront:
+    enabled: true
+    image: tinycars-storefront
+    port: 8080
+    servicePort: 80
+    serviceType: LoadBalancer   # set to ClusterIP and use port-forward / your own ingress if preferred
+    inject: nodejs
+    replicas: 1
+    cpuRequest: 100m
+    memoryRequest: 128Mi
+    cpuLimit: ""                # set e.g. 500m to make the storefront_high_cpu pattern visible as CPU throttling
+    memoryLimit: 512Mi
+  catalog:
+    enabled: true
+    image: tinycars-catalog
+    port: 8081
+    servicePort: 8081
+    serviceType: ClusterIP
+    inject: python
+    replicas: 1
+    cpuRequest: 100m
+    memoryRequest: 128Mi
+    cpuLimit: ""
+    memoryLimit: 512Mi
+  cart-checkout:
+    enabled: true
+    image: tinycars-cart-checkout
+    port: 8082
+    servicePort: 8082
+    serviceType: ClusterIP
+    inject: java
+    replicas: 1
+    cpuRequest: 150m
+    memoryRequest: 256Mi
+    cpuLimit: ""
+    memoryLimit: 768Mi
+  inventory:
+    enabled: true
+    image: tinycars-inventory
+    port: 8083
+    servicePort: 8083
+    serviceType: ClusterIP
+    inject: dotnet
+    replicas: 1
+    cpuRequest: 100m
+    memoryRequest: 192Mi
+    cpuLimit: ""
+    memoryLimit: 512Mi
+  loadgen:
+    enabled: true
+    image: tinycars-loadgen
+    port: 0                     # no HTTP port, no Service
+    servicePort: 0
+    serviceType: ClusterIP
+    inject: python
+    replicas: 1
+    cpuRequest: 50m
+    memoryRequest: 96Mi
+    cpuLimit: ""
+    memoryLimit: 384Mi

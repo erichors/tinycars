@@ -1,0 +1,40 @@
+{{- if .Values.otel.instrumentation.create }}
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: tinycars
+  labels:
+    app.kubernetes.io/part-of: tinycars
+spec:
+  exporter:
+    endpoint: {{ .Values.otel.endpoint | quote }}
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: {{ .Values.otel.instrumentation.samplerArgument | quote }}
+  resource:
+    addK8sUIDAttributes: true
+    resourceAttributes:
+      service.namespace: tinycars
+      deployment.environment: {{ .Values.otel.environment | quote }}
+  java:
+    env:
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: {{ .Values.otel.protocol | quote }}
+  nodejs:
+    env:
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: {{ .Values.otel.protocol | quote }}
+  python:
+    env:
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: {{ .Values.otel.protocol | quote }}
+      - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
+        value: "false"
+  dotnet:
+    env:
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: {{ .Values.otel.protocol | quote }}
+{{- end }}

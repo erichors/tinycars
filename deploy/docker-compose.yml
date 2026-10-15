@@ -1,0 +1,57 @@
+# Local functional preview: docker compose up --build   ->  http://localhost:8080  (admin: /admin, token "tinycars")
+#
+# NOTE: auto-instrumentation comes from the OpenTelemetry Operator, which needs Kubernetes.
+# This compose file runs the same app without the Operator, so it is for UI/behavior checks only.
+# For telemetry, use the Helm chart on any Kubernetes cluster (see README).
+name: tinycars
+
+x-app-env: &app-env
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: tinycars
+  DB_USER: tinycars
+  DB_PASSWORD: tinycars
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_URL: redis://redis:6379/0
+  CATALOG_URL: http://catalog:8081
+  CART_URL: http://cart-checkout:8082
+  INVENTORY_URL: http://inventory:8083
+  STOREFRONT_URL: http://storefront:8080
+  ADMIN_TOKEN: tinycars
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: tinycars, POSTGRES_PASSWORD: tinycars, POSTGRES_DB: tinycars }
+    volumes:
+      - ../db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tinycars -d tinycars"]
+      interval: 5s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+  catalog:
+    build: ../services/catalog
+    environment: *app-env
+    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_started } }
+  inventory:
+    build: ../services/inventory
+    environment: *app-env
+    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_started } }
+  cart-checkout:
+    build: ../services/cart-checkout
+    environment: *app-env
+    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_started } }
+  storefront:
+    build: ../services/storefront
+    environment: *app-env
+    ports: ["8080:8080"]
+    depends_on: [catalog, inventory, cart-checkout]
+  loadgen:
+    build: ../services/loadgen
+    environment: *app-env
+    depends_on: [storefront]

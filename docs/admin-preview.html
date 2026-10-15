@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TinyCars - garage control room</title>
+  <meta name="robots" content="noindex">
+  <style>
+    :root{--bg:#0e1117;--panel:#161b24;--line:#283042;--txt:#d7dde8;--dim:#8a94a7;--acc:#f6c945;--ok:#3ddc84;--bad:#ff5d5d;--warn:#ffb020}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+    header h1{font-size:16px;margin:0;color:var(--acc);letter-spacing:.08em}
+    header a{color:var(--dim);margin-left:auto;text-decoration:none}
+    main{max-width:1100px;margin:0 auto;padding:20px 22px 60px;display:grid;gap:18px}
+    section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+    h2{margin:0 0 12px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+    button,select,input{font:inherit;background:#0b0f16;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+    button{cursor:pointer}button:hover{border-color:var(--acc)}
+    button.primary{background:var(--acc);color:#111;border-color:var(--acc);font-weight:700}
+    button.danger{border-color:var(--bad);color:var(--bad)}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--bad);margin-right:6px}.dot.up{background:var(--ok)}
+    .pat{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+    .pat:first-of-type{border-top:0}
+    .pat b{color:var(--txt)}.pat small{display:block;color:var(--dim)}
+    .badge{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+    .sw{position:relative;width:44px;height:24px;background:#2a3142;border-radius:999px;cursor:pointer;border:0;padding:0}
+    .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#8a94a7;transition:.15s}
+    .sw.on{background:var(--bad)}.sw.on::after{left:23px;background:#fff}
+    .grp{color:var(--acc);margin:14px 0 2px;font-size:12px;letter-spacing:.1em}
+    #events div{padding:3px 0;border-top:1px solid var(--line);color:var(--dim)}#events div:first-child{border-top:0}
+    #events .ENABLED{color:var(--bad)}#events .DISABLED{color:var(--ok)}
+    input[type=range]{width:240px;padding:0}
+    #gate{max-width:360px;margin:12vh auto;text-align:center}
+    .hide{display:none}
+  </style>
+</head>
+<body>
+  <section id="gate" class="hide"><h2>Garage control room</h2>
+    <p class="row" style="justify-content:center"><input id="tok" type="password" placeholder="admin token"><button class="primary" id="go">Enter</button></p>
+    <div id="gateMsg" style="color:var(--bad)"></div></section>
+  <div id="app" class="">
+    <header><h1>TINYCARS // CONTROL ROOM</h1><span id="health"><span class="badge"><span class="dot up"></span>catalog</span> <span class="badge"><span class="dot up"></span>cart-checkout</span> <span class="badge"><span class="dot up"></span>inventory</span> <span class="badge"><span class="dot up"></span>storefront</span></span><a href="/">← back to the shop</a></header>
+    <main>
+      <section><h2>Load generator</h2>
+        <div class="row" style="margin-bottom:12px">
+          <button id="lStart" class="primary">Start</button><button id="lStop">Stop</button>
+          <span>presets:</span>
+          <button data-rpm="6">Quiet (6/min)</button><button data-rpm="30">Normal (30/min)</button><button data-rpm="180">Black Friday (180/min)</button>
+        </div>
+        <div class="row"><label>sessions/min <input id="rpm" type="range" min="0" max="300" step="2"> <b id="rpmV">30</b></label>
+          <label>web vs in-store <input id="web" type="range" min="0" max="100" step="5"> <b id="webV">70</b>% web</label>
+          <span id="lState" class="badge" style="color: var(--ok);">RUNNING</span></div>
+      </section>
+      <section><h2>Problem patterns</h2><div id="patterns"><div class="grp">APP</div><div class="pat"><button class="sw " data-toggle="inventory_db_not_responding" aria-label="toggle Inventory DB not responding"></button>
+        <div><b>Inventory DB not responding</b> <span class="badge">inventory</span><small>inventory throws database errors; stock cannot be reserved or restocked (easyTrade DbNotResponding).</small></div>
+        <select data-level="inventory_db_not_responding" title="level"><option value="1">lvl 1</option><option selected="" value="2">lvl 2</option><option value="3">lvl 3</option><option value="4">lvl 4</option><option value="5">lvl 5</option></select><span></span></div><div class="pat"><button class="sw " data-toggle="catalog_search_slowdown" aria-label="toggle Catalog search slowdown"></button>
+        <div><b>Catalog search slowdown</b> <span class="badge">catalog</span><small>Search slows down, then starts timing out under load (easyTrade ErgoAggregatorSlowdown).</small></div>
+        <select data-level="catalog_search_slowdown" title="level"><option value="1">lvl 1</option><option selected="" value="2">lvl 2</option><option value="3">lvl 3</option><option value="4">lvl 4</option><option value="5">lvl 5</option></select><span></span></div><div class="pat"><button class="sw " data-toggle="checkout_dependency_stall" aria-label="toggle Checkout payment stall"></button>
+        <div><b>Checkout payment stall</b> <span class="badge">cart-checkout</span><small>Payment processor stops responding; checkouts hang then time out (easyTrade FactoryCrisis).</small></div>
+        <select data-level="checkout_dependency_stall" title="level"><option value="1">lvl 1</option><option selected="" value="2">lvl 2</option><option value="3">lvl 3</option><option value="4">lvl 4</option><option value="5">lvl 5</option></select><span></span></div><div class="pat"><button class="sw " data-toggle="storefront_high_cpu" aria-label="toggle Storefront high CPU"></button>
+        <div><b>Storefront high CPU</b> <span class="badge">storefront</span><small>Storefront burns CPU per request; latency climbs and pods throttle if a CPU limit is set (easyTrade HighCpuUsage).</small></div>
+        <select data-level="storefront_high_cpu" title="level"><option value="1">lvl 1</option><option selected="" value="2">lvl 2</option><option value="3">lvl 3</option><option value="4">lvl 4</option><option value="5">lvl 5</option></select><span></span></div><div class="grp">POSTGRES</div><div class="pat"><button class="sw " data-toggle="inventory_pool_exhaustion" aria-label="toggle Connection pool exhaustion"></button>
+        <div><b>Connection pool exhaustion</b> <span class="badge">inventory</span><small>inventory holds DB connections too long; the pool fills and new requests queue then fail.</small></div>
+        <select data-level="inventory_pool_exhaustion" title="level"><option value="1">lvl 1</option><option selected="" value="2">lvl 2</option><option value="3">lvl 3</option><option value="4">lvl 4</option><option value="5">lvl 5</option></select><span></span></div><div class="pat"><button class="sw on" data-toggle="inventory_slow_query" aria-label="toggle Slow / long-running query"></button>
+        <div><b>Slow / long-running query</b> <span class="badge">inventory</span><small>inventory runs a sequential-scan query with an artificial sleep against Postgres.</small></div>
+        <select data-level="inventory_slow_query" title="level"><option value="1">lvl 1</option><option selected="" value="2">lvl 2</option><option value="3">lvl 3</option><option value="4">lvl 4</option><option value="5">lvl 5</option></select><span></span></div><div class="grp">STORE VM / SIEM</div><div class="pat"><button class="sw " data-toggle="store_failed_login_flood" aria-label="toggle Failed-login flood"></button>
+        <div><b>Failed-login flood</b> <span class="badge">store-agent</span><small>Chosen store emits a burst of failed SSH login log lines (synthetic).</small></div>
+        <select data-level="store_failed_login_flood" title="level"><option value="1">lvl 1</option><option selected="" value="2">lvl 2</option><option value="3">lvl 3</option><option value="4">lvl 4</option><option value="5">lvl 5</option></select><select data-store="store_failed_login_flood"><option selected="">boston</option><option>chicago</option><option>london</option></select></div><div class="pat"><button class="sw " data-toggle="store_file_integrity_alert" aria-label="toggle File-integrity alert"></button>
+        <div><b>File-integrity alert</b> <span class="badge">store-agent</span><small>Chosen store emits synthetic audit events for edits to watched config files.</small></div>
+        <select data-level="store_file_integrity_alert" title="level"><option value="1">lvl 1</option><option selected="" value="2">lvl 2</option><option value="3">lvl 3</option><option value="4">lvl 4</option><option value="5">lvl 5</option></select><select data-store="store_file_integrity_alert"><option selected="">boston</option><option>chicago</option><option>london</option></select></div><div class="pat"><button class="sw " data-toggle="impossible_travel" aria-label="toggle Impossible travel"></button>
+        <div><b>Impossible travel</b> <span class="badge">store-agent</span><small>Same account buys in a US store, then orders from London minutes later.</small></div>
+        <select data-level="impossible_travel" title="level"><option value="1">lvl 1</option><option selected="" value="2">lvl 2</option><option value="3">lvl 3</option><option value="4">lvl 4</option><option value="5">lvl 5</option></select><span></span></div></div>
+        <div class="row" style="margin-top:12px"><button class="danger" id="reset">All patterns off</button>
+          <span class="badge">level 1-5 scales delay / error rate / burst size</span></div></section>
+      <section><h2>Recent events</h2><div id="events"><div><span class="ENABLED">PATTERN_ENABLED</span> inventory_slow_query lvl 2 <small>3:43:08 PM</small></div><div><span class="">LOAD_CHANGED</span> 30/min <small>3:43:08 PM</small></div></div></section>
+    </main>
+  </div>
+  
+
+
+</body></html>
