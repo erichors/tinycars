@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate TinyCars catalog: 66 SKUs, SVG art, and db/seed.sql.
+"""Generate TinyCars catalog: 67 SKUs, SVG art, and db/seed.sql.
 
 Usage: python3 tools/gen_catalog.py
 Writes:
@@ -34,7 +34,7 @@ CATALOG = [
     ("Boulevard Cruiser", "Classics & Muscle", "sedan", "1950s", TEAL, CRM, "basic", "A four-door sedan with chrome trim and a lazy Sunday cruise."),
     ("Land Yacht", "Classics & Muscle", "boxy_sedan", "1980s", BRN, VINYL, "premium", "Formal full-size sedan with a vinyl roof and an opera window."),
     ("Woody Wagon", "Classics & Muscle", "wagon", "1960s", CRM, RED, "basic", "Wood-grain sides and a roof rack loaded for the lake house."),
-    ("Family Hauler", "Classics & Muscle", "wagon_modern", "1990s", BLU, SLV, "basic", "Long-roof wagon with rails, a spoiler and room for everyone."),
+    ("Big Frank Cruiser", "Classics & Muscle", "hot_dog", "1950s", "#a9452b", "#d39a55", "premium", "A rolling hot dog on a toasted bun, mustard on top. Honks at every picnic."),
     ("GT Continental", "Classics & Muscle", "gt_coupe", "1960s", FOREST, CRM, "premium", "Grand-touring fastback with wire wheels and teardrop glass."),
     ("Gasser Hot Rod", "Classics & Muscle", "hot_rod", "1950s", PUR, YEL, "premium", "Supercharged street rod with painted flames."),
     ("Rat Pack Rod", "Classics & Muscle", "rat_rod", "1950s", RUST, SLV, "premium", "Patina, primer and an engine you can see from across the lot."),
@@ -105,6 +105,8 @@ CATALOG = [
     ("Flatbed Hauler", "Construction", "flatbed", "1980s", BLU, SLV, "basic", "Steel deck, headache rack and a strapped load of crates."),
     ("Farmhand Tractor", "Construction", "tractor", "1960s", RED, CRM, "basic", "Giant ribbed rear tires, a long hood and an exhaust stack."),
     ("Dig & Load Backhoe", "Construction", "backhoe", "1980s", YEL, GRAPH, "premium", "Loader up front, digger out back, stabilizers down."),
+    # Racing addition
+    ("Oval Thunder 64", "Sports & Racing", "stock_car", "2010s", YEL, BLU, "premium", "Oval-track stock car with a big door number, roof flaps and a rear spoiler."),
 ]
 
 PRICES = {
@@ -114,7 +116,7 @@ PRICES = {
 }
 LOCATIONS = ["warehouse", "boston", "chicago", "london"]
 FX_GBP = 0.79
-NEW_ARRIVAL_NAMES = {"Stainless Wedge", "Line Crew Bucket Truck", "Desert Sand Rail", "Flatbed Hauler", "Farmhand Tractor", "Dig & Load Backhoe", "Cone Cruiser", "Bog Stomper", "Nitro Funny Car", "Milano Spider", "Trike Cruiser", "Kei Hauler", "Boulevard Convertible"}
+NEW_ARRIVAL_NAMES = {"Oval Thunder 64", "Big Frank Cruiser", "Stainless Wedge", "Line Crew Bucket Truck", "Desert Sand Rail", "Flatbed Hauler", "Farmhand Tractor", "Dig & Load Backhoe", "Cone Cruiser", "Bog Stomper", "Nitro Funny Car", "Milano Spider", "Trike Cruiser", "Kei Hauler", "Boulevard Convertible"}
 FIRST = ["alex", "sam", "jordan", "casey", "riley", "morgan", "taylor", "jamie", "drew", "avery",
          "quinn", "reese", "blake", "harper", "skyler", "rowan", "devon", "emery", "finley", "logan"]
 LAST = ["smith", "patel", "nguyen", "garcia", "okafor", "kim", "murphy", "rossi", "chen", "brown",
@@ -128,7 +130,7 @@ def esc(s):
 LENGTH_IN = {"limo": 4.1, "motorhome": 3.9, "school_bus": 3.8, "fire_truck": 3.8, "troop_transport": 3.7, "fuel_tanker": 3.7,
              "crane_truck": 3.8, "dump_truck": 3.6, "garbage_truck": 3.6, "cement_mixer": 3.6, "tow_truck": 3.6, "delivery_van": 3.5,
              "dragster": 4.0, "funny_car": 3.9, "boxy_sedan": 3.5, "city_mini": 2.3, "kei_3wheel": 2.6, "trike_bike": 2.8, "dune_buggy": 2.7,
-             "bucket_truck": 3.7, "flatbed": 3.7, "tractor": 2.6, "backhoe": 3.3, "sand_rail": 2.9, "wedge_pickup": 3.3}
+             "bucket_truck": 3.7, "flatbed": 3.7, "tractor": 2.6, "backhoe": 3.3, "sand_rail": 2.9, "wedge_pickup": 3.3, "hot_dog": 3.6, "formula_racer": 3.4, "stock_car": 3.1}
 FINISHES = ["Gloss enamel", "Metallic", "Pearl", "Satin", "Candy"]
 
 
@@ -262,7 +264,7 @@ def contact_sheet(products):
 
 if __name__ == "__main__":
     r, prods = build()
-    assert len(prods) == 66, len(prods)
+    assert len(prods) == 67, len(prods)
     write_files(r, prods)
     contact_sheet(prods)
     print(f"wrote {len(prods)} SKUs, svgs, db/seed.sql")

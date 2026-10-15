@@ -962,7 +962,63 @@ def backhoe(c):  # backhoe loader: front loader bucket, glass cab, rear digging 
     return s + wheel(132, 166, 38) + wheel(292, 178, 26)
 
 
+
+def hot_dog(c):  # novelty promo car: a giant sausage riding in a toasted bun, mustard on top (generic, no brand)
+    b, a = c["body"], c["accent"]
+    s = arch(104, 182, 25) + arch(300, 182, 25)
+    s += f'<rect x="20" y="74" width="366" height="64" rx="32" fill="{b}"/>'
+    s += f'<path d="M48 86 Q66 76 84 86 T120 86 T156 86 T192 86 T228 86 T264 86 T300 86 T336 86 T360 86" stroke="#e8b81e" stroke-width="5" fill="none" stroke-linecap="round"/>'
+    s += f'<path d="M48 86 Q66 76 84 86 T120 86 T156 86 T192 86 T228 86 T264 86 T300 86 T336 86 T360 86" stroke="#fff3b0" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".6" transform="translate(0 -1.2)"/>'
+    s += f'<rect x="34" y="120" width="338" height="60" rx="28" fill="{a}"/>'
+    s += f'<path d="M44 132 Q200 124 362 132" stroke="#fff" stroke-width="1.6" fill="none" opacity=".35"/>'
+    for x in (92, 146, 200, 254):
+        s += f'<rect x="{x}" y="134" width="42" height="16" rx="8" fill="{GLASS}"/>'
+    s += poly("M314 132 Q350 130 364 150 L316 150 Z", GLASS)
+    s += f'<path d="M140 134 V176 M196 134 V176" stroke="#000" stroke-width="1.3" opacity=".25"/><rect x="176" y="156" width="14" height="3.4" rx="1.7" fill="{CHROME}"/>'
+    s += f'<rect x="40" y="170" width="326" height="6" rx="3" fill="{CHROME}"/>'
+    s += '<circle cx="360" cy="160" r="6" fill="#ffe36b"/><rect x="36" y="152" width="6" height="12" rx="2" fill="#e03b3b"/>'
+    return s + wheel(104, 182, 22, style="disc", white=True) + wheel(300, 182, 22, style="disc", white=True)
+
+
+
+def formula_racer(c):  # modern open-wheel formula car: long nose, front wing, halo, sidepods, shark fin, big rear wing (generic)
+    b, a = c["body"], c["accent"]
+    s = f'<rect x="44" y="96" width="9" height="60" rx="2" fill="{DARK}"/><path d="M74 104 L92 150" stroke="{DARK}" stroke-width="4"/>'
+    s += f'<rect x="40" y="90" width="66" height="9" rx="2" fill="{a}"/><rect x="42" y="102" width="62" height="6" rx="2" fill="{b}"/>'
+    s += f'<rect x="60" y="168" width="300" height="7" rx="2" fill="{DARK}"/>'
+    s += poly("M108 166 L112 134 L146 106 L194 104 L204 122 L240 132 L250 150 L250 168 Z", b)
+    s += poly("M146 106 L120 132 L112 134 L118 112 Z", a)
+    s += poly("M226 148 L374 158 L378 166 L226 170 Z", b)
+    s += f'<path d="M130 152 L246 152" stroke="{a}" stroke-width="7" stroke-linecap="round"/><path d="M250 160 L372 162" stroke="{a}" stroke-width="3"/>'
+    s += f'<circle cx="214" cy="122" r="10" fill="{a}"/><rect x="214" y="117" width="10" height="5" rx="2" fill="{GLASS}"/>'
+    s += f'<path d="M196 112 Q232 102 254 134" stroke="{DARK}" stroke-width="4.5" fill="none" stroke-linecap="round"/>'
+    s += poly("M330 172 L392 166 L394 180 L328 182 Z", a) + f'<rect x="386" y="158" width="6" height="24" rx="1" fill="{DARK}"/>'
+    s += f'<path d="M282 158 L316 172 M276 162 L300 178" stroke="{DARK}" stroke-width="2.5"/><path d="M118 150 L96 174 M130 156 L104 176" stroke="{DARK}" stroke-width="2.5"/>'
+    s += '<rect x="40" y="140" width="5" height="10" rx="1" fill="#e03b3b"/>'
+    return s + wheel(96, 177, 28, style="disc") + wheel(318, 179, 26, style="disc")
+
+
+def stock_car(c):  # oval-track stock car: low fastback, door number, window net, big spoiler, decal strip, splitter (generic livery)
+    b, a = c["body"], c["accent"]
+    s = arch(104, 178, 31) + arch(306, 178, 31)
+    s += poly("M34 178 L34 150 Q36 138 50 136 L118 128 L160 102 Q166 98 176 98 L236 98 Q246 98 254 104 L300 128 L354 134 Q372 138 374 156 L376 178 Z", b)
+    s += poly("M36 152 Q38 140 52 138 L118 130 L196 130 L120 178 L36 178 Z", a)
+    s += f'<path d="M200 132 L128 178" stroke="#f4f4f0" stroke-width="4"/>'
+    s += f'<rect x="30" y="118" width="40" height="7" rx="2" fill="{DARK}"/><path d="M38 125 L42 136 M62 125 L60 134" stroke="{DARK}" stroke-width="3"/>'
+    s += poly("M172 106 L214 106 L214 126 L152 126 Z", GLASS) + poly("M220 106 L246 106 L272 126 L220 126 Z", GLASS)
+    s += "".join(f'<path d="M{x} 107 L{x - 6} 125" stroke="{DARK}" stroke-width="1.4" opacity=".75"/>' for x in (180, 192, 204, 214)) + f'<path d="M160 116 H214" stroke="{DARK}" stroke-width="1.4" opacity=".75"/>'
+    s += f'<rect x="196" y="96" width="34" height="3" rx="1.5" fill="{DARK}" opacity=".6"/>'
+    s += '<circle cx="236" cy="150" r="19" fill="#f4f4f0"/><circle cx="236" cy="150" r="19" fill="none" stroke="#000" stroke-width="1.5" opacity=".35"/>'
+    s += '<text x="236" y="158" text-anchor="middle" font-family="Arial Black,Arial,Helvetica,sans-serif" font-weight="900" font-size="22" fill="#17191d">64</text>'
+    for i, x in enumerate(range(268, 340, 12)):
+        s += f'<rect x="{x}" y="160" width="10" height="5" rx="1" fill="{"#f4f4f0" if i % 2 == 0 else "#9aa1ab"}" opacity=".9"/>'
+    s += f'<rect x="336" y="175" width="44" height="4" rx="1" fill="{DARK}"/><rect x="356" y="152" width="18" height="5" rx="1" fill="{DARK}" opacity=".7"/>'
+    s += '<rect x="352" y="143" width="16" height="6" rx="2" fill="#ffe9a0"/><rect x="34" y="142" width="6" height="10" rx="2" fill="#e03b3b"/>'
+    return s + wheel(104, 178, 27, hub="#1d1f23", style="steel") + wheel(306, 178, 27, hub="#1d1f23", style="steel")
+
 TEMPLATES = {
+    "formula_racer": formula_racer, "stock_car": stock_car,
+    "hot_dog": hot_dog,
     "wedge_pickup": wedge_pickup, "bucket_truck": bucket_truck, "sand_rail": sand_rail,
     "flatbed": flatbed, "tractor": tractor, "backhoe": backhoe,
     "funny_car": funny_car, "monster_truck": monster_truck, "convertible": convertible,
@@ -1079,6 +1135,9 @@ META = {
     "flatbed": ("Flatbed truck", ["Steel deck with stake pockets", "Headache rack", "Strapped load of crates"], "Tandem rear axle"),
     "tractor": ("Farm tractor", ["Giant ribbed rear tires", "Roll-over cab and exhaust stack", "Long hood with grille"], "Big-and-little ag wheels"),
     "backhoe": ("Backhoe loader", ["Front loader bucket", "Rear digging arm", "Stabilizer legs"], "Big rear wheels"),
+    "hot_dog": ("Hot-dog promo car", ["Giant sausage body with a mustard stripe", "Toasted-bun lower body with porthole windows", "Bubble windshield"], "Whitewall disc wheels"),
+    "formula_racer": ("Modern formula car", ["Halo cockpit protection", "Multi-element front and rear wings", "Sidepods and shark-fin engine cover"], "Covered racing wheels"),
+    "stock_car": ("Oval-track stock car", ["Big door number roundel", "Window net and two-tone livery", "Rear spoiler, decal strip and front splitter"], "Black steel racing wheels"),
     "front_loader": ("Wheel loader", ["Lift arms and bucket", "Giant tires", "Articulated-style body"], "Giant wheels"),
     "open_wheel": ("Open-wheel racer", ["Front and rear wings", "Driver helmet", "Exposed wheels"], "Racing wheels"),
     "dragster": ("Drag racer", ["Supercharged engine", "Huge rear slicks", "Rear wing"], "Slick rear tires"),
@@ -1125,6 +1184,9 @@ ANCH = {
     "flatbed": [("Crates", "Strapped load of wooden crates", 84, 126), ("Headache rack", "Protects the cab from the load", 238, 124), ("Deck", "Steel deck with stake pockets", 140, 156), ("Wheels", "Tandem rear axle", 128, 180)],
     "tractor": [("Rear tire", "Giant ribbed rear tire", 122, 140), ("Exhaust stack", "Vertical exhaust stack", 293, 80), ("Cab", "Roll-over cab with seat and wheel", 166, 92), ("Grille", "Front grille and hood", 341, 138)],
     "backhoe": [("Backhoe arm", "Rear digging arm with bucket", 40, 90), ("Loader bucket", "Front loader bucket", 364, 148), ("Cab", "Glass cab", 180, 98), ("Stabilizer", "Stabilizer leg and pad", 78, 186)],
+    "hot_dog": [("Mustard", "Zig-zag mustard stripe down the top", 200, 84), ("Sausage", "Sausage body overhanging the bun", 30, 106), ("Bun windows", "Rounded windows in the bun", 167, 142), ("Windshield", "Bubble windshield", 340, 142), ("Whitewalls", "Whitewall disc wheels", 300, 182)],
+    "formula_racer": [("Rear wing", "Two-element rear wing with end plate", 72, 96), ("Halo", "Titanium-style halo over the cockpit", 228, 110), ("Front wing", "Multi-element front wing", 362, 174), ("Wheels", "Covered racing wheels", 96, 177)],
+    "stock_car": [("Door number", "Big number roundel", 236, 150), ("Window net", "Driver window net", 188, 116), ("Spoiler", "Rear deck spoiler", 50, 121), ("Splitter", "Front splitter", 358, 176)],
     "front_loader": [("Bucket", "Loader bucket", 332, 148), ("Lift arms", "Hydraulic lift arms", 240, 146), ("Giant tires", "Big loader tires", 292, 172)],
 }
 
@@ -1172,7 +1234,7 @@ import re as _re
 # Corner radius per silhouette. Cars and pickups get generous radii; working trucks and military less;
 # the wedge concept car keeps its hard edges on purpose.
 SOFT_DEFAULT = 14
-SOFT = {"wedge": 0, "wedge_pickup": 0, "bucket_truck": 6, "flatbed": 6, "tractor": 6, "backhoe": 5, "sand_rail": 4, "open_wheel": 4, "dragster": 4, "funny_car": 7,
+SOFT = {"formula_racer": 4, "wedge": 0, "wedge_pickup": 0, "bucket_truck": 6, "flatbed": 6, "tractor": 6, "backhoe": 5, "sand_rail": 4, "open_wheel": 4, "dragster": 4, "funny_car": 7,
         "tank": 4, "armored_carrier": 4, "military_truck": 5, "troop_transport": 5, "recon": 5, "fuel_tanker": 5,
         "dump_truck": 5, "excavator": 4, "bulldozer": 4, "cement_mixer": 5, "crane_truck": 5, "front_loader": 4,
         "fire_truck": 6, "garbage_truck": 6, "tow_truck": 6, "school_bus": 7, "delivery_van": 7, "motorhome": 8}
