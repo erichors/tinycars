@@ -1089,7 +1089,57 @@ def gullwing(c):  # 1980s stainless wedge coupe: gullwing door raised, louvred r
     return s + wheel(104, 178, 26, style="mag") + wheel(306, 178, 26, style="mag")
 
 
+def _open_frame_4x4(c, four):
+    """Upright-windshield 4x4 (generic): flat hood, exposed hinges, flat flares, rock rails, rear spare, steel bumpers."""
+    b, a = c["body"], c["accent"]
+    if four:
+        L, R, w1, w2, ws = 44, 362, 100, 300, 246
+        wins = [(54, 94), (102, 158), (168, None)]
+        seams, hinges = (98, 164), (166, 100)
+    else:
+        L, R, w1, w2, ws = 64, 352, 116, 294, 236
+        wins = [(76, 136), (154, None)]
+        seams, hinges = (148,), (150,)
+    s = wheel(L - 8, 128, 24, style="chunky")  # tailgate spare, behind the body
+    s += arch(w1, 174, 33) + arch(w2, 174, 33)
+    s += poly(f"M{L} 166 L{L} 88 Q{L} 80 {L + 8} 80 L{ws - 10} 80 L{ws} 120 L{R - 10} 120 Q{R} 122 {R} 132 L{R} 166 Z", b)
+    if four:  # hardtop
+        s += poly(f"M{L} 92 L{L} 86 Q{L} 80 {L + 8} 80 L{ws - 10} 80 L{ws - 7} 92 Z", a)
+    else:     # soft top with a rounded rear bow
+        s += poly(f"M{L} 120 L{L} 92 Q{L} 76 {L + 16} 76 L{ws - 12} 78 L{ws - 6} 94 L{ws - 50} 94 L{ws - 50} 120 Z", a)
+    for x1, x2 in wins:
+        x2 = x2 if x2 else ws - 8
+        if x2 == ws - 8:
+            s += poly(f"M{x1} 96 L{x2 - 4} 96 L{x2 + 3} 118 L{x1} 118 Z", GLASS)
+        else:
+            s += poly(f"M{x1} 96 L{x2} 96 L{x2} 118 L{x1} 118 Z", GLASS if four else "#9fb1c1")
+    s += poly(f"M{ws - 9} 84 L{ws - 4} 84 L{ws + 4} 120 L{ws - 1} 120 Z", GLASS)
+    s += "".join(f'<path d="M{x} 94 V158" stroke="#000" stroke-width="1.5" opacity=".32"/>' for x in seams + (ws,))
+    for x in hinges:
+        s += f'<rect x="{x}" y="126" width="5" height="7" rx="1" fill="{DARK}"/><rect x="{x}" y="148" width="5" height="7" rx="1" fill="{DARK}"/>'
+    for x in ((150, 228) if four else (222,)):
+        s += f'<rect x="{x}" y="125" width="13" height="3.4" rx="1.7" fill="{DARK}"/>'
+    for cx in (w1, w2):
+        s += poly(f"M{cx - 44} 154 L{cx - 34} 136 L{cx + 34} 136 L{cx + 44} 154 L{cx + 38} 158 L{cx - 38} 158 Z", "#25282d")
+    s += f'<rect x="{w1 + 40}" y="158" width="{w2 - w1 - 80}" height="9" rx="2" fill="#25282d"/>'
+    s += f'<rect x="{R - 10}" y="156" width="22" height="12" rx="2" fill="#25282d"/><rect x="{L - 16}" y="156" width="20" height="12" rx="2" fill="#25282d"/>'
+    s += f'<rect x="{R + 6}" y="160" width="5" height="5" rx="1" fill="#e03b3b"/>'
+    s += f'<rect x="{R - 6}" y="124" width="6" height="30" rx="1" fill="#25282d"/>' + "".join(f'<path d="M{R - 6} {y} H{R}" stroke="#555a62" stroke-width="1.4"/>' for y in (130, 136, 142, 148))
+    s += f'<circle cx="{R - 12}" cy="133" r="7" fill="#ffe36b"/><rect x="{R - 20}" y="146" width="8" height="4" rx="1" fill="#ffb020"/>'
+    s += f'<rect x="{L}" y="124" width="6" height="14" rx="2" fill="#e03b3b"/>'
+    s += f'<path d="M{ws + 4} 112 L{ws - 2} 120" stroke="{DARK}" stroke-width="2"/><rect x="{ws}" y="104" width="10" height="8" rx="2" fill="{DARK}"/>'
+    return s + wheel(w1, 174, 30, style="chunky") + wheel(w2, 174, 30, style="chunky")
+
+
+def four_door_4x4(c):  # four-door open-frame 4x4 with hardtop
+    return _open_frame_4x4(c, True)
+
+
+def two_door_4x4(c):  # short-wheelbase two-door open-frame 4x4 with soft top
+    return _open_frame_4x4(c, False)
+
 TEMPLATES = {
+    "four_door_4x4": four_door_4x4, "two_door_4x4": two_door_4x4,
     "police_suv": police_suv, "fire_suv": fire_suv, "steam_roller": steam_roller,
     "pinto_compact": pinto_compact, "gullwing": gullwing,
     "formula_racer": formula_racer, "stock_car": stock_car,
@@ -1218,6 +1268,8 @@ META = {
     "steam_roller": ("Steam road roller", ["Front roller drum", "Boiler with brass bands and tall chimney", "Canopy and flywheel"], "Spoked rear wheels and steel drum"),
     "pinto_compact": ("1970s subcompact fastback", ["Sloping hatchback rear glass", "Big chrome bumpers", "Side tape stripe"], "Small hubcaps"),
     "gullwing": ("Stainless gullwing coupe", ["Gullwing door raised", "Louvered rear glass", "Brushed stainless panels"], "Five-spoke wheels"),
+    "two_door_4x4": ("Two-door 4x4", ["Soft top with rounded rear bow", "Upright windshield and exposed hinges", "Flat fender flares and rear spare"], "Beadlock-style off-road wheels"),
+    "four_door_4x4": ("Four-door 4x4", ["Upright windshield and removable-style hardtop", "Four doors with exposed hinges", "Flat fender flares, rock rails and rear spare"], "Beadlock-style off-road wheels"),
     "front_loader": ("Wheel loader", ["Lift arms and bucket", "Giant tires", "Articulated-style body"], "Giant wheels"),
     "open_wheel": ("Open-wheel racer", ["Front and rear wings", "Driver helmet", "Exposed wheels"], "Racing wheels"),
     "dragster": ("Drag racer", ["Supercharged engine", "Huge rear slicks", "Rear wing"], "Slick rear tires"),
@@ -1272,6 +1324,8 @@ ANCH = {
     "steam_roller": [("Chimney", "Tall chimney with brass cap", 295, 60), ("Roller drum", "Front roller drum", 320, 172), ("Flywheel", "Spoked flywheel", 214, 92), ("Canopy", "Canopy on posts", 126, 44)],
     "pinto_compact": [("Hatch glass", "Sloping fastback hatch", 150, 118), ("Bumpers", "Big chrome bumpers", 355, 170), ("Stripe", "Side tape stripe", 200, 147), ("Hubcaps", "Small hubcaps", 296, 180)],
     "gullwing": [("Gullwing door", "Door raised on its roof hinge", 222, 72), ("Louvers", "Louvered rear glass", 156, 116), ("Interior", "Seat visible through the open door", 221, 142), ("Wheels", "Five-spoke wheels", 306, 178)],
+    "four_door_4x4": [("Hardtop", "Removable-style hardtop", 140, 85), ("Door hinges", "Exposed door hinges", 168, 140), ("Spare", "Tailgate-mounted spare", 36, 128), ("Flares", "Flat fender flares and off-road tires", 300, 148)],
+    "two_door_4x4": [("Soft top", "Soft top with a rounded rear bow", 120, 82), ("Door hinges", "Exposed door hinges", 152, 140), ("Spare", "Tailgate-mounted spare", 56, 128), ("Flares", "Flat fender flares and off-road tires", 294, 148)],
     "front_loader": [("Bucket", "Loader bucket", 332, 148), ("Lift arms", "Hydraulic lift arms", 240, 146), ("Giant tires", "Big loader tires", 292, 172)],
 }
 
@@ -1319,7 +1373,7 @@ import re as _re
 # Corner radius per silhouette. Cars and pickups get generous radii; working trucks and military less;
 # the wedge concept car keeps its hard edges on purpose.
 SOFT_DEFAULT = 14
-SOFT = {"steam_roller": 6, "gullwing": 4, "formula_racer": 4, "wedge": 0, "wedge_pickup": 0, "bucket_truck": 6, "flatbed": 6, "tractor": 6, "backhoe": 5, "sand_rail": 4, "open_wheel": 4, "dragster": 4, "funny_car": 7,
+SOFT = {"four_door_4x4": 7, "two_door_4x4": 7, "steam_roller": 6, "gullwing": 4, "formula_racer": 4, "wedge": 0, "wedge_pickup": 0, "bucket_truck": 6, "flatbed": 6, "tractor": 6, "backhoe": 5, "sand_rail": 4, "open_wheel": 4, "dragster": 4, "funny_car": 7,
         "tank": 4, "armored_carrier": 4, "military_truck": 5, "troop_transport": 5, "recon": 5, "fuel_tanker": 5,
         "dump_truck": 5, "excavator": 4, "bulldozer": 4, "cement_mixer": 5, "crane_truck": 5, "front_loader": 4,
         "fire_truck": 6, "garbage_truck": 6, "tow_truck": 6, "school_bus": 7, "delivery_van": 7, "motorhome": 8}

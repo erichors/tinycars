@@ -50,8 +50,8 @@ CATALOG = [
     ("Trike Cruiser", "Imports & Compacts", "trike_bike", "1990s", TEAL, CRM, "premium", "Touring trike with a trunk, chrome pipes and two rear wheels."),
     # Off-Roaders (7)
     ("Trailblazer 4x4", "Off-Roaders", "offroader", "1970s", ORG, BLK, "premium", "Boxy original with a roof rack and a spare on the back."),
-    ("Rock Crawler", "Off-Roaders", "trail_jeep", "1990s", RED, TAN, "premium", "Open-top trail runner with a slotted grille and a soft top."),
-    ("Trailmaster", "Off-Roaders", "boxy_suv", "1990s", FOREST, SLV, "premium", "Boxy four-wheel-drive wagon with flares and side steps."),
+    ("Rock Crawler", "Off-Roaders", "two_door_4x4", "1990s", RED, TAN, "premium", "Open-top trail runner with a slotted grille and a soft top."),
+    ("Ridge Runner 4-Door", "Off-Roaders", "four_door_4x4", "2010s", "#2f7fb0", BLK, "premium", "Four doors, a hardtop, exposed hinges and a spare on the tailgate. Trail-rated for the whole family."),
     ("Highland Classic", "Off-Roaders", "classic_luxury_suv", "1980s", SLATE, CRM, "premium", "Two-tone luxury 4x4 with a long flat hood."),
     ("Beach Buggy", "Off-Roaders", "dune_buggy", "1970s", ORG, YEL, "basic", "Roll cage, open seats and an engine out back."),
     ("Mud Giant", "Off-Roaders", "mud_truck", "2000s", BLU, ORG, "premium", "Lifted pickup on oversized tires."),
@@ -122,7 +122,7 @@ PRICES = {
 }
 LOCATIONS = ["warehouse", "boston", "chicago", "london"]
 FX_GBP = 0.79
-NEW_ARRIVAL_NAMES = {"Interceptor SUV", "Fire Chief SUV", "Steam Roller", "Runabout '74", "Flux Gullwing", "Oval Thunder 64", "Big Frank Cruiser", "Stainless Wedge", "Line Crew Bucket Truck", "Desert Sand Rail", "Flatbed Hauler", "Farmhand Tractor", "Dig & Load Backhoe", "Cone Cruiser", "Bog Stomper", "Nitro Funny Car", "Milano Spider", "Trike Cruiser", "Kei Hauler", "Boulevard Convertible"}
+NEW_ARRIVAL_NAMES = {"Ridge Runner 4-Door", "Interceptor SUV", "Fire Chief SUV", "Steam Roller", "Runabout '74", "Flux Gullwing", "Oval Thunder 64", "Big Frank Cruiser", "Stainless Wedge", "Line Crew Bucket Truck", "Desert Sand Rail", "Flatbed Hauler", "Farmhand Tractor", "Dig & Load Backhoe", "Cone Cruiser", "Bog Stomper", "Nitro Funny Car", "Milano Spider", "Trike Cruiser", "Kei Hauler", "Boulevard Convertible"}
 FIRST = ["alex", "sam", "jordan", "casey", "riley", "morgan", "taylor", "jamie", "drew", "avery",
          "quinn", "reese", "blake", "harper", "skyler", "rowan", "devon", "emery", "finley", "logan"]
 LAST = ["smith", "patel", "nguyen", "garcia", "okafor", "kim", "murphy", "rossi", "chen", "brown",
@@ -136,7 +136,7 @@ def esc(s):
 LENGTH_IN = {"limo": 4.1, "motorhome": 3.9, "school_bus": 3.8, "fire_truck": 3.8, "troop_transport": 3.7, "fuel_tanker": 3.7,
              "crane_truck": 3.8, "dump_truck": 3.6, "garbage_truck": 3.6, "cement_mixer": 3.6, "tow_truck": 3.6, "delivery_van": 3.5,
              "dragster": 4.0, "funny_car": 3.9, "boxy_sedan": 3.5, "city_mini": 2.3, "kei_3wheel": 2.6, "trike_bike": 2.8, "dune_buggy": 2.7,
-             "bucket_truck": 3.7, "flatbed": 3.7, "tractor": 2.6, "backhoe": 3.3, "sand_rail": 2.9, "wedge_pickup": 3.3, "hot_dog": 3.6, "formula_racer": 3.4, "stock_car": 3.1, "police_suv": 3.2, "fire_suv": 3.2, "steam_roller": 2.9, "pinto_compact": 2.9, "gullwing": 3.0}
+             "bucket_truck": 3.7, "flatbed": 3.7, "tractor": 2.6, "backhoe": 3.3, "sand_rail": 2.9, "wedge_pickup": 3.3, "hot_dog": 3.6, "formula_racer": 3.4, "stock_car": 3.1, "police_suv": 3.2, "fire_suv": 3.2, "steam_roller": 2.9, "pinto_compact": 2.9, "gullwing": 3.0, "four_door_4x4": 3.0, "two_door_4x4": 2.7}
 FINISHES = ["Gloss enamel", "Metallic", "Pearl", "Satin", "Candy"]
 
 
