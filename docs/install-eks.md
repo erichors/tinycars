@@ -147,7 +147,7 @@ helm install tinycars deploy/helm/tinycars \
 kubectl -n tinycars get pods -w
 ```
 
-Expected: `postgres` and `redis` first, then `catalog`, `inventory`, `cart-checkout`, `storefront` and `loadgen`. Instrumented pods show an init container (`opentelemetry-auto-instrumentation-*`). Java and .NET can take 60-90 seconds to become ready. The first Postgres start loads 67 cars, 268 stock rows and about 420 historic orders.
+Expected: `postgres` and `redis` first, then `catalog`, `inventory`, `cart-checkout`, `storefront` and `loadgen`. Instrumented pods show an init container (`opentelemetry-auto-instrumentation-*`). Java and .NET can take 60-90 seconds to become ready. The first Postgres start loads 72 cars, 288 stock rows and about 420 historic orders.
 
 Get the store address:
 

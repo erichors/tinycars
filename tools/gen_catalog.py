@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate TinyCars catalog: 67 SKUs, SVG art, and db/seed.sql.
+"""Generate TinyCars catalog: 72 SKUs, SVG art, and db/seed.sql.
 
 Usage: python3 tools/gen_catalog.py
 Writes:
@@ -107,6 +107,12 @@ CATALOG = [
     ("Dig & Load Backhoe", "Construction", "backhoe", "1980s", YEL, GRAPH, "premium", "Loader up front, digger out back, stabilizers down."),
     # Racing addition
     ("Oval Thunder 64", "Sports & Racing", "stock_car", "2010s", YEL, BLU, "premium", "Oval-track stock car with a big door number, roof flaps and a rear spoiler."),
+    # Twelfth row (5) - evens off the sheet
+    ("Interceptor SUV", "Everyday & Emergency", "police_suv", "2020s", BLK, WHT, "premium", "Pursuit SUV with a split light bar, push bumper and two-tone doors."),
+    ("Fire Chief SUV", "Everyday & Emergency", "fire_suv", "2020s", RED, WHT, "premium", "Command SUV with an all-red light bar and a reflective stripe."),
+    ("Steam Roller", "Construction", "steam_roller", "1920s", FOREST, RED, "premium", "Brass-banded boiler, a tall chimney and a big front drum."),
+    ("Runabout '74", "Classics & Muscle", "pinto_compact", "1970s", ORG, CRM, "basic", "Little fastback with a hatch, big bumpers and a tape stripe."),
+    ("Flux Gullwing", "Sports & Racing", "gullwing", "1980s", SLV, BLK, "premium", "Brushed stainless wedge with its gullwing door up. Just add 88 mph."),
 ]
 
 PRICES = {
@@ -116,7 +122,7 @@ PRICES = {
 }
 LOCATIONS = ["warehouse", "boston", "chicago", "london"]
 FX_GBP = 0.79
-NEW_ARRIVAL_NAMES = {"Oval Thunder 64", "Big Frank Cruiser", "Stainless Wedge", "Line Crew Bucket Truck", "Desert Sand Rail", "Flatbed Hauler", "Farmhand Tractor", "Dig & Load Backhoe", "Cone Cruiser", "Bog Stomper", "Nitro Funny Car", "Milano Spider", "Trike Cruiser", "Kei Hauler", "Boulevard Convertible"}
+NEW_ARRIVAL_NAMES = {"Interceptor SUV", "Fire Chief SUV", "Steam Roller", "Runabout '74", "Flux Gullwing", "Oval Thunder 64", "Big Frank Cruiser", "Stainless Wedge", "Line Crew Bucket Truck", "Desert Sand Rail", "Flatbed Hauler", "Farmhand Tractor", "Dig & Load Backhoe", "Cone Cruiser", "Bog Stomper", "Nitro Funny Car", "Milano Spider", "Trike Cruiser", "Kei Hauler", "Boulevard Convertible"}
 FIRST = ["alex", "sam", "jordan", "casey", "riley", "morgan", "taylor", "jamie", "drew", "avery",
          "quinn", "reese", "blake", "harper", "skyler", "rowan", "devon", "emery", "finley", "logan"]
 LAST = ["smith", "patel", "nguyen", "garcia", "okafor", "kim", "murphy", "rossi", "chen", "brown",
@@ -130,7 +136,7 @@ def esc(s):
 LENGTH_IN = {"limo": 4.1, "motorhome": 3.9, "school_bus": 3.8, "fire_truck": 3.8, "troop_transport": 3.7, "fuel_tanker": 3.7,
              "crane_truck": 3.8, "dump_truck": 3.6, "garbage_truck": 3.6, "cement_mixer": 3.6, "tow_truck": 3.6, "delivery_van": 3.5,
              "dragster": 4.0, "funny_car": 3.9, "boxy_sedan": 3.5, "city_mini": 2.3, "kei_3wheel": 2.6, "trike_bike": 2.8, "dune_buggy": 2.7,
-             "bucket_truck": 3.7, "flatbed": 3.7, "tractor": 2.6, "backhoe": 3.3, "sand_rail": 2.9, "wedge_pickup": 3.3, "hot_dog": 3.6, "formula_racer": 3.4, "stock_car": 3.1}
+             "bucket_truck": 3.7, "flatbed": 3.7, "tractor": 2.6, "backhoe": 3.3, "sand_rail": 2.9, "wedge_pickup": 3.3, "hot_dog": 3.6, "formula_racer": 3.4, "stock_car": 3.1, "police_suv": 3.2, "fire_suv": 3.2, "steam_roller": 2.9, "pinto_compact": 2.9, "gullwing": 3.0}
 FINISHES = ["Gloss enamel", "Metallic", "Pearl", "Satin", "Candy"]
 
 
@@ -264,7 +270,7 @@ def contact_sheet(products):
 
 if __name__ == "__main__":
     r, prods = build()
-    assert len(prods) == 67, len(prods)
+    assert len(prods) == 72, len(prods)
     write_files(r, prods)
     contact_sheet(prods)
     print(f"wrote {len(prods)} SKUs, svgs, db/seed.sql")

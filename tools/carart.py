@@ -1016,7 +1016,82 @@ def stock_car(c):  # oval-track stock car: low fastback, door number, window net
     s += '<rect x="352" y="143" width="16" height="6" rx="2" fill="#ffe9a0"/><rect x="34" y="142" width="6" height="10" rx="2" fill="#e03b3b"/>'
     return s + wheel(104, 178, 27, hub="#1d1f23", style="steel") + wheel(306, 178, 27, hub="#1d1f23", style="steel")
 
+def _utility_suv(c, lights, extra, wheel_style, hub=HUB):
+    """Modern pursuit-style SUV base shared by the police and fire SUVs."""
+    b, a = c["body"], c["accent"]
+    s = arch(104, 178, 31) + arch(300, 178, 31)
+    s += poly("M38 176 L38 120 Q38 108 50 106 L250 104 L290 128 L346 134 Q366 138 366 156 L366 176 Z", b)
+    s += extra
+    s += poly("M58 112 L116 112 L116 128 L58 128 Z", GLASS) + poly("M124 112 L184 112 L184 128 L124 128 Z", GLASS) + poly("M190 112 L246 112 L272 128 L190 128 Z", GLASS)
+    s += f'<path d="M120 112 V170 M187 112 V170" stroke="#000" stroke-width="1.4" opacity=".3"/><rect x="160" y="136" width="14" height="3.4" rx="1.7" fill="{CHROME}"/><rect x="226" y="136" width="14" height="3.4" rx="1.7" fill="{CHROME}"/>'
+    s += f'<rect x="132" y="96" width="44" height="9" rx="3" fill="{lights[0]}"/><rect x="178" y="96" width="44" height="9" rx="3" fill="{lights[1]}"/><rect x="130" y="103" width="94" height="3" fill="{DARK}"/>'
+    s += f'<rect x="362" y="134" width="9" height="38" rx="3" fill="{DARK}"/><path d="M362 146 H371 M362 158 H371" stroke="#4a4e55" stroke-width="2"/>'
+    s += f'<rect x="56" y="100" width="190" height="4" rx="2" fill="{DARK}" opacity=".8"/>'
+    s += '<rect x="340" y="138" width="18" height="7" rx="2" fill="#ffe9a0"/><rect x="38" y="122" width="6" height="18" rx="2" fill="#e03b3b"/>'
+    s += f'<path d="M282 118 L276 126" stroke="{DARK}" stroke-width="2"/><ellipse cx="282" cy="116" rx="6" ry="4" fill="{DARK}"/>'
+    return s + wheel(104, 178, 27, hub=hub, style=wheel_style) + wheel(300, 178, 27, hub=hub, style=wheel_style)
+
+
+def police_suv(c):  # pursuit-rated SUV: two-tone doors, split light bar, push bumper, spotlight
+    a = c["accent"]
+    extra = (f'<path d="M120 130 L272 130 L290 140 L290 170 L120 170 Z" fill="{a}"/>'
+             '<text x="205" y="157" text-anchor="middle" font-family="Arial Black,Arial,Helvetica,sans-serif" font-weight="900" font-size="15" fill="#17191d">POLICE</text>'
+             f'<rect x="250" y="106" width="8" height="5" rx="1" fill="{CHROME}"/>')
+    return _utility_suv(c, ("#e03b3b", "#2457b5"), extra, "steel", hub="#1d1f23")
+
+
+def fire_suv(c):  # fire command SUV: red with reflective stripe, all-red light bar, door crest
+    extra = ('<rect x="38" y="146" width="328" height="7" fill="#f4f4f0"/><rect x="38" y="155" width="328" height="3" fill="#e8b81e"/>'
+             '<circle cx="216" cy="134" r="0" fill="none"/>'
+             '<text x="205" y="172" text-anchor="middle" font-family="Arial Black,Arial,Helvetica,sans-serif" font-weight="900" font-size="11" fill="#f4f4f0">FIRE CHIEF</text>')
+    return _utility_suv(c, ("#e03b3b", "#e03b3b"), extra, "mag")
+
+
+def steam_roller(c):  # vintage steam road roller: front drum, boiler, tall chimney, canopy, flywheel, big spoked rear wheels
+    b, a = c["body"], c["accent"]
+    s = f'<path d="M72 48 V112 M182 48 V104" stroke="{DARK}" stroke-width="3.5"/><rect x="58" y="40" width="136" height="9" rx="3" fill="{a}"/>'
+    s += f'<rect x="80" y="100" width="82" height="72" rx="5" fill="{b}"/><rect x="92" y="112" width="26" height="22" rx="3" fill="#1b1d21"/>'
+    s += f'<rect x="150" y="104" width="160" height="42" rx="21" fill="{b}"/>' + "".join(f'<rect x="{x}" y="104" width="5" height="42" fill="#c9a24a"/>' for x in (190, 236, 282))
+    s += f'<rect x="300" y="100" width="18" height="50" rx="6" fill="{DARK}"/>'
+    s += f'<rect x="288" y="50" width="14" height="56" fill="{DARK}"/><rect x="284" y="44" width="22" height="8" rx="2" fill="#c9a24a"/>'
+    s += f'<rect x="296" y="124" width="48" height="22" rx="4" fill="{b}"/><path d="M304 146 L300 170 M336 146 L340 170" stroke="{DARK}" stroke-width="5"/>'
+    s += f'<circle cx="214" cy="92" r="18" fill="{DARK}"/>' + "".join(f'<path d="M214 92 L{214 + math.cos(math.radians(t)) * 16:.1f} {92 + math.sin(math.radians(t)) * 16:.1f}" stroke="#c9a24a" stroke-width="2"/>' for t in range(0, 360, 60))
+    _WHEELS.append((320, 204, 30, 32))
+    s += '<circle cx="320" cy="172" r="32" fill="url(#gunmetal)"/><circle cx="320" cy="172" r="32" fill="url(#dish)"/><circle cx="320" cy="172" r="9" fill="url(#rim)"/>'
+    s += '<circle cx="320" cy="172" r="27" fill="none" stroke="#1a1c20" stroke-width="1.4" opacity=".6"/>'
+    return s + wheel(110, 158, 46, hub=a, style="steel")
+
+
+def pinto_compact(c):  # 1970s subcompact fastback: sloping hatch, big bumpers, side tape stripe, small hubcaps
+    b, a = c["body"], c["accent"]
+    s = arch(108, 180, 28) + arch(296, 180, 28)
+    s += poly("M44 176 L44 148 Q46 138 58 136 L96 132 L150 104 Q156 100 166 100 L232 100 Q242 100 248 106 L276 128 L340 136 Q358 140 358 156 L358 176 Z", b)
+    s += poly("M106 130 L152 106 L180 106 L180 128 Z", GLASS) + poly("M186 106 L230 106 L256 128 L186 128 Z", GLASS)
+    s += f'<path d="M183 106 V170" stroke="#000" stroke-width="1.4" opacity=".3"/><rect x="222" y="136" width="14" height="3.4" rx="1.7" fill="{CHROME}"/>'
+    s += f'<rect x="56" y="144" width="296" height="4" fill="{a}"/><rect x="56" y="150" width="296" height="2" fill="{a}"/>'
+    s += f'<rect x="36" y="166" width="22" height="9" rx="3" fill="{CHROME}"/><rect x="344" y="166" width="22" height="9" rx="3" fill="{CHROME}"/>'
+    s += f'<path d="M262 120 L256 128" stroke="{DARK}" stroke-width="2"/><ellipse cx="264" cy="118" rx="5" ry="3.5" fill="{CHROME}"/>'
+    s += '<circle cx="348" cy="148" r="6" fill="#ffe36b"/><rect x="44" y="146" width="7" height="12" rx="2" fill="#e03b3b"/>'
+    return s + wheel(108, 180, 24, style="disc") + wheel(296, 180, 24, style="disc")
+
+
+def gullwing(c):  # 1980s stainless wedge coupe: gullwing door raised, louvred rear glass, black lower band
+    b, a = c["body"], c["accent"]
+    s = arch(104, 178, 30) + arch(306, 178, 30)
+    s += poly("M40 174 L40 140 L60 130 L130 124 L170 102 L246 100 L300 124 L362 138 L366 150 L366 174 Z", b)
+    s += f'<rect x="40" y="160" width="326" height="14" fill="#2a2d33"/>'
+    s += poly("M178 104 L244 102 L284 124 L276 150 L182 150 Z", "#24272c") + f'<rect x="206" y="122" width="28" height="28" rx="5" fill="#40444b"/><path d="M262 130 L250 122" stroke="#5a5f67" stroke-width="3"/>'
+    s += poly("M134 124 L170 104 L176 104 L176 124 Z", DARK) + "".join(f'<path d="M{x} {124 - (x - 134) * 0.55:.1f} V124" stroke="#4a4e55" stroke-width="1.5"/>' for x in range(142, 176, 6))
+    s += poly("M180 102 L244 100 L262 52 L198 46 Z", b) + poly("M192 92 L238 92 L250 62 L204 58 Z", GLASS)
+    s += f'<path d="M180 102 L244 100" stroke="{DARK}" stroke-width="2"/>'
+    s += f'<rect x="344" y="142" width="20" height="5" rx="1" fill="#ffe9a0"/><rect x="40" y="142" width="8" height="10" rx="1" fill="#e03b3b"/>'
+    s += f'<path d="M60 150 H160 M300 148 H360" stroke="#000" stroke-width="1" opacity=".25"/>'
+    return s + wheel(104, 178, 26, style="mag") + wheel(306, 178, 26, style="mag")
+
+
 TEMPLATES = {
+    "police_suv": police_suv, "fire_suv": fire_suv, "steam_roller": steam_roller,
+    "pinto_compact": pinto_compact, "gullwing": gullwing,
     "formula_racer": formula_racer, "stock_car": stock_car,
     "hot_dog": hot_dog,
     "wedge_pickup": wedge_pickup, "bucket_truck": bucket_truck, "sand_rail": sand_rail,
@@ -1138,6 +1213,11 @@ META = {
     "hot_dog": ("Hot-dog promo car", ["Giant sausage body with a mustard stripe", "Toasted-bun lower body with porthole windows", "Bubble windshield"], "Whitewall disc wheels"),
     "formula_racer": ("Modern formula car", ["Halo cockpit protection", "Multi-element front and rear wings", "Sidepods and shark-fin engine cover"], "Covered racing wheels"),
     "stock_car": ("Oval-track stock car", ["Big door number roundel", "Window net and two-tone livery", "Rear spoiler, decal strip and front splitter"], "Black steel racing wheels"),
+    "police_suv": ("Police pursuit SUV", ["Split red and blue light bar", "Two-tone doors", "Push bumper and spotlight"], "Black steel wheels"),
+    "fire_suv": ("Fire command SUV", ["All-red light bar", "Reflective side stripe", "Push bumper"], "Five-spoke mag wheels"),
+    "steam_roller": ("Steam road roller", ["Front roller drum", "Boiler with brass bands and tall chimney", "Canopy and flywheel"], "Spoked rear wheels and steel drum"),
+    "pinto_compact": ("1970s subcompact fastback", ["Sloping hatchback rear glass", "Big chrome bumpers", "Side tape stripe"], "Small hubcaps"),
+    "gullwing": ("Stainless gullwing coupe", ["Gullwing door raised", "Louvered rear glass", "Brushed stainless panels"], "Five-spoke wheels"),
     "front_loader": ("Wheel loader", ["Lift arms and bucket", "Giant tires", "Articulated-style body"], "Giant wheels"),
     "open_wheel": ("Open-wheel racer", ["Front and rear wings", "Driver helmet", "Exposed wheels"], "Racing wheels"),
     "dragster": ("Drag racer", ["Supercharged engine", "Huge rear slicks", "Rear wing"], "Slick rear tires"),
@@ -1187,6 +1267,11 @@ ANCH = {
     "hot_dog": [("Mustard", "Zig-zag mustard stripe down the top", 200, 84), ("Sausage", "Sausage body overhanging the bun", 30, 106), ("Bun windows", "Rounded windows in the bun", 167, 142), ("Windshield", "Bubble windshield", 340, 142), ("Whitewalls", "Whitewall disc wheels", 300, 182)],
     "formula_racer": [("Rear wing", "Two-element rear wing with end plate", 72, 96), ("Halo", "Titanium-style halo over the cockpit", 228, 110), ("Front wing", "Multi-element front wing", 362, 174), ("Wheels", "Covered racing wheels", 96, 177)],
     "stock_car": [("Door number", "Big number roundel", 236, 150), ("Window net", "Driver window net", 188, 116), ("Spoiler", "Rear deck spoiler", 50, 121), ("Splitter", "Front splitter", 358, 176)],
+    "police_suv": [("Light bar", "Split red and blue light bar", 177, 99), ("Doors", "Two-tone doors with lettering", 205, 152), ("Push bumper", "Front push bumper", 366, 152), ("Wheels", "Black steel wheels", 300, 178)],
+    "fire_suv": [("Light bar", "All-red light bar", 177, 99), ("Stripe", "Reflective side stripe", 120, 150), ("Push bumper", "Front push bumper", 366, 152), ("Wheels", "Five-spoke mag wheels", 300, 178)],
+    "steam_roller": [("Chimney", "Tall chimney with brass cap", 295, 60), ("Roller drum", "Front roller drum", 320, 172), ("Flywheel", "Spoked flywheel", 214, 92), ("Canopy", "Canopy on posts", 126, 44)],
+    "pinto_compact": [("Hatch glass", "Sloping fastback hatch", 150, 118), ("Bumpers", "Big chrome bumpers", 355, 170), ("Stripe", "Side tape stripe", 200, 147), ("Hubcaps", "Small hubcaps", 296, 180)],
+    "gullwing": [("Gullwing door", "Door raised on its roof hinge", 222, 72), ("Louvers", "Louvered rear glass", 156, 116), ("Interior", "Seat visible through the open door", 221, 142), ("Wheels", "Five-spoke wheels", 306, 178)],
     "front_loader": [("Bucket", "Loader bucket", 332, 148), ("Lift arms", "Hydraulic lift arms", 240, 146), ("Giant tires", "Big loader tires", 292, 172)],
 }
 
@@ -1234,7 +1319,7 @@ import re as _re
 # Corner radius per silhouette. Cars and pickups get generous radii; working trucks and military less;
 # the wedge concept car keeps its hard edges on purpose.
 SOFT_DEFAULT = 14
-SOFT = {"formula_racer": 4, "wedge": 0, "wedge_pickup": 0, "bucket_truck": 6, "flatbed": 6, "tractor": 6, "backhoe": 5, "sand_rail": 4, "open_wheel": 4, "dragster": 4, "funny_car": 7,
+SOFT = {"steam_roller": 6, "gullwing": 4, "formula_racer": 4, "wedge": 0, "wedge_pickup": 0, "bucket_truck": 6, "flatbed": 6, "tractor": 6, "backhoe": 5, "sand_rail": 4, "open_wheel": 4, "dragster": 4, "funny_car": 7,
         "tank": 4, "armored_carrier": 4, "military_truck": 5, "troop_transport": 5, "recon": 5, "fuel_tanker": 5,
         "dump_truck": 5, "excavator": 4, "bulldozer": 4, "cement_mixer": 5, "crane_truck": 5, "front_loader": 4,
         "fire_truck": 6, "garbage_truck": 6, "tow_truck": 6, "school_bus": 7, "delivery_van": 7, "motorhome": 8}
