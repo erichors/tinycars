@@ -93,7 +93,7 @@ CATALOG = [
     ("Sky Lift", "Construction", "crane_truck", "1990s", RED, YEL, "premium", "Truck-mounted crane that reaches for the clouds."),
     ("Load Lugger", "Construction", "front_loader", "1980s", YEL, BLK, "basic", "Scoops, lifts, and dumps all day."),
     # Limited Edition (5) - gold variants of fan favorites
-    ("Gold Thunder Coupe", "Limited Edition", "muscle_coupe", "1960s", "gold", "gold", "limited", "Numbered gold edition of the '67 Thunder Coupe."),
+    ("Sunrunner Open-Top", "Off-Roaders", "open_top_4x4", "2010s", RED, BLK, "premium", "Top folded down, black roll bars, four black seats and a spare on the back."),
     ("Golden Fastback", "Limited Edition", "rear_engine", "1970s", "gold", "gold", "limited", "Gold-plated fastback, numbered run."),
     ("Golden Trailblazer", "Limited Edition", "offroader", "1970s", "gold", "gold", "limited", "Collector gold finish on the beloved 4x4."),
     ("Chrome Guardian", "Limited Edition", "tank", "1980s", "gold", "gold", "limited", "Gilded tank, limited to a tiny run."),
@@ -122,7 +122,7 @@ PRICES = {
 }
 LOCATIONS = ["warehouse", "boston", "chicago", "london"]
 FX_GBP = 0.79
-NEW_ARRIVAL_NAMES = {"Ridge Runner 4-Door", "Interceptor SUV", "Fire Chief SUV", "Steam Roller", "Runabout '74", "Flux Gullwing", "Oval Thunder 64", "Big Frank Cruiser", "Stainless Wedge", "Line Crew Bucket Truck", "Desert Sand Rail", "Flatbed Hauler", "Farmhand Tractor", "Dig & Load Backhoe", "Cone Cruiser", "Bog Stomper", "Nitro Funny Car", "Milano Spider", "Trike Cruiser", "Kei Hauler", "Boulevard Convertible"}
+NEW_ARRIVAL_NAMES = {"Sunrunner Open-Top", "Ridge Runner 4-Door", "Interceptor SUV", "Fire Chief SUV", "Steam Roller", "Runabout '74", "Flux Gullwing", "Oval Thunder 64", "Big Frank Cruiser", "Stainless Wedge", "Line Crew Bucket Truck", "Desert Sand Rail", "Flatbed Hauler", "Farmhand Tractor", "Dig & Load Backhoe", "Cone Cruiser", "Bog Stomper", "Nitro Funny Car", "Milano Spider", "Trike Cruiser", "Kei Hauler", "Boulevard Convertible"}
 FIRST = ["alex", "sam", "jordan", "casey", "riley", "morgan", "taylor", "jamie", "drew", "avery",
          "quinn", "reese", "blake", "harper", "skyler", "rowan", "devon", "emery", "finley", "logan"]
 LAST = ["smith", "patel", "nguyen", "garcia", "okafor", "kim", "murphy", "rossi", "chen", "brown",
@@ -136,7 +136,7 @@ def esc(s):
 LENGTH_IN = {"limo": 4.1, "motorhome": 3.9, "school_bus": 3.8, "fire_truck": 3.8, "troop_transport": 3.7, "fuel_tanker": 3.7,
              "crane_truck": 3.8, "dump_truck": 3.6, "garbage_truck": 3.6, "cement_mixer": 3.6, "tow_truck": 3.6, "delivery_van": 3.5,
              "dragster": 4.0, "funny_car": 3.9, "boxy_sedan": 3.5, "city_mini": 2.3, "kei_3wheel": 2.6, "trike_bike": 2.8, "dune_buggy": 2.7,
-             "bucket_truck": 3.7, "flatbed": 3.7, "tractor": 2.6, "backhoe": 3.3, "sand_rail": 2.9, "wedge_pickup": 3.3, "hot_dog": 3.6, "formula_racer": 3.4, "stock_car": 3.1, "police_suv": 3.2, "fire_suv": 3.2, "steam_roller": 2.9, "pinto_compact": 2.9, "gullwing": 3.0, "four_door_4x4": 3.0, "two_door_4x4": 2.7}
+             "bucket_truck": 3.7, "flatbed": 3.7, "tractor": 2.6, "backhoe": 3.3, "sand_rail": 2.9, "wedge_pickup": 3.3, "hot_dog": 3.6, "formula_racer": 3.4, "stock_car": 3.1, "police_suv": 3.2, "fire_suv": 3.2, "steam_roller": 2.9, "pinto_compact": 2.9, "gullwing": 3.0, "four_door_4x4": 3.0, "two_door_4x4": 2.7, "open_top_4x4": 2.8}
 FINISHES = ["Gloss enamel", "Metallic", "Pearl", "Satin", "Candy"]
 
 

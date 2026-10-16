@@ -126,4 +126,4 @@ tools/                                                          art + catalog ge
 
 ## Catalog and detail views
 
-72 cars in 9 categories with 67 distinct generic silhouettes, rendered as studio product shots (lit paint, tinted glass, chrome, detailed wheels and tracks, contact shadows and floor reflections; SVG lighting filters, so they look best in a browser). Click any car for a detail view with hotspot pins, close-up zoom, lightbox, specs and per-store stock. Regenerate art and seed data with `python3 tools/gen_catalog.py`.
+72 cars in 9 categories with 68 distinct generic silhouettes, rendered as studio product shots (lit paint, tinted glass, chrome, detailed wheels and tracks, contact shadows and floor reflections; SVG lighting filters, so they look best in a browser). Click any car for a detail view with hotspot pins, close-up zoom, lightbox, specs and per-store stock. Regenerate art and seed data with `python3 tools/gen_catalog.py`.
