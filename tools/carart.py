@@ -110,6 +110,16 @@ def wheel(cx, cy=178, r=27, hub=HUB, style=None, white=False):
     return s
 
 
+def spare_edge(xr, cy, r):
+    """Spare tyre on a tailgate/rear panel, seen edge-on from the side: tread profile only, with its mount."""
+    x = xr - 13
+    s = f'<rect x="{xr - 3}" y="{cy - 5}" width="6" height="10" rx="1" fill="#141518"/>'
+    s += f'<rect x="{x}" y="{cy - r}" width="13" height="{2 * r}" rx="6" fill="url(#treadg)"/>'
+    s += "".join(f'<path d="M{x + 2} {y:.1f} H{x + 11}" stroke="#08090a" stroke-width="1.6" opacity=".8"/>' for y in [cy - r + 5 + i * 4.2 for i in range(int((2 * r - 8) / 4.2) + 1)])
+    s += f'<path d="M{x + 4} {cy - r + 4} V{cy + r - 4}" stroke="#fff" stroke-width="1" opacity=".12"/>'
+    return s
+
+
 def arch(cx, cy=178, r=31):
     """Register a wheel well; the well itself is drawn by wheel() on top of the body."""
     _ARCHES[cx] = r
@@ -173,7 +183,7 @@ def hatch(c):
 
 def offroader(c):
     b, a = c["body"], c["accent"]
-    s = f'<circle cx="52" cy="140" r="21" fill="{TIRE}"/><circle cx="52" cy="140" r="11" fill="{HUB}"/>'
+    s = spare_edge(62, 140, 21)
     s += arch(116, 176, 38) + arch(290, 176, 38)
     s += poly("M62 176 L62 112 Q62 104 70 104 L250 104 L262 128 L338 134 Q348 136 348 148 L348 176 Z", b)
     s += poly("M80 112 L236 112 L248 132 L80 132 Z", GLASS)
@@ -242,7 +252,7 @@ def troop_transport(c):
 
 def recon(c):  # WWII-style quarter-ton scout (generic): short tub, flat hood, upright windshield, open seats, rear spare, jerry can
     b, a = c["body"], c["accent"]
-    s = wheel(82, 142, 22)  # rear-mounted spare, behind the tub
+    s = spare_edge(92, 142, 22)  # rear-mounted spare, edge-on
     s += f'<path d="M102 134 L94 40" stroke="{DARK}" stroke-width="1.6"/><rect x="98" y="128" width="8" height="8" rx="1" fill="{DARK}"/>'
     s += arch(130, 180, 29) + arch(272, 180, 29)
     s += poly("M92 178 L92 134 L252 134 L256 130 L312 130 Q318 130 318 137 L318 178 Z", b)
@@ -1121,7 +1131,7 @@ def _open_frame_4x4(c, four):
         L, R, w1, w2, ws = 64, 352, 116, 294, 236
         wins = [(76, 136), (154, None)]
         seams, hinges = (148,), (150,)
-    s = wheel(L - 8, 128, 24, style="chunky")  # tailgate spare, behind the body
+    s = spare_edge(L, 128, 24)  # tailgate spare, edge-on
     s += arch(w1, 174, 33) + arch(w2, 174, 33)
     s += poly(f"M{L} 166 L{L} 88 Q{L} 80 {L + 8} 80 L{ws - 10} 80 L{ws} 120 L{R - 10} 120 Q{R} 122 {R} 132 L{R} 166 Z", b)
     if four:  # hardtop
@@ -1161,7 +1171,7 @@ def two_door_4x4(c):  # short-wheelbase two-door open-frame 4x4 with soft top
 
 def open_top_4x4(c):  # civilian open-top 4x4 (generic): folded soft top, black roll bars, four seats, black interior, flares, rear spare
     b, a = c["body"], c["accent"]
-    s = wheel(82, 140, 23, style="chunky")  # rear spare behind the tub
+    s = spare_edge(92, 140, 23)  # rear spare, edge-on
     s += arch(130, 178, 31) + arch(276, 178, 31)
     s += poly("M92 176 L92 132 L254 132 L258 128 L316 128 Q322 128 322 135 L322 176 Z", b)
     s += poly("M176 132 L180 150 Q183 157 193 157 L228 157 Q236 157 238 149 L242 132 Z", "#121316")
@@ -1349,7 +1359,7 @@ ANCH = {
     "military_truck": [("Antenna", "Whip antenna", 64, 40), ("Roof hatch", "Roof hatch", 147, 79), ("Hood", "Long flat hood", 300, 122), ("Tires", "Big off-road tires", 312, 175)],
     "troop_transport": [("Canvas cover", "Ribbed canvas cargo cover", 150, 100), ("Cab", "Cab with window", 300, 108), ("Axles", "Three axles", 125, 180)],
     "fuel_tanker": [("Tank", "Banded tank barrel", 150, 130), ("Hatch", "Roof hatch", 150, 94), ("Axles", "Tandem rear axle", 132, 180)],
-    "recon": [("Windshield", "Upright fold-style windshield", 251, 104), ("Spare", "Rear-mounted spare", 82, 142), ("Jerry can", "Jerry can and side shovel", 105, 124), ("Seats", "Open seats", 206, 120)],
+    "recon": [("Windshield", "Upright fold-style windshield", 251, 104), ("Spare", "Rear-mounted spare", 86, 142), ("Jerry can", "Jerry can and side shovel", 105, 124), ("Seats", "Open seats", 206, 120)],
     "tank": [("Barrel", "Long gun barrel with muzzle", 330, 102), ("Turret", "Turret with hatch", 210, 100), ("Tracks", "Road wheels and tracks", 200, 172)],
     "armored_carrier": [("Turret", "Roof turret", 200, 98), ("Slit windows", "Armored slit windows", 110, 124), ("Wheels", "Four axles", 310, 180)],
     "dump_truck": [("Dump bed", "Tilted bed with ribs", 150, 110), ("Hydraulic ram", "Hydraulic lift ram", 212, 136), ("Wheels", "Tandem rear axle", 170, 180)],
@@ -1371,9 +1381,9 @@ ANCH = {
     "steam_roller": [("Chimney", "Tall chimney with brass cap", 295, 60), ("Roller drum", "Front roller drum", 320, 172), ("Flywheel", "Spoked flywheel", 214, 92), ("Canopy", "Canopy on posts", 126, 44)],
     "pinto_compact": [("Hatch glass", "Sloping fastback hatch", 150, 118), ("Bumpers", "Big chrome bumpers", 355, 170), ("Stripe", "Side tape stripe", 200, 147), ("Hubcaps", "Small hubcaps", 296, 180)],
     "gullwing": [("Gullwing door", "Door raised on its roof hinge", 222, 72), ("Louvers", "Louvered rear glass", 156, 116), ("Interior", "Seat visible through the open door", 221, 142), ("Wheels", "Five-spoke wheels", 306, 178)],
-    "four_door_4x4": [("Hardtop", "Removable-style hardtop", 140, 85), ("Door hinges", "Exposed door hinges", 168, 140), ("Spare", "Tailgate-mounted spare", 36, 128), ("Flares", "Flat fender flares and off-road tires", 300, 148)],
-    "two_door_4x4": [("Soft top", "Soft top with a rounded rear bow", 120, 82), ("Door hinges", "Exposed door hinges", 152, 140), ("Spare", "Tailgate-mounted spare", 56, 128), ("Flares", "Flat fender flares and off-road tires", 294, 148)],
-    "open_top_4x4": [("Folded top", "Black soft top folded at the back", 108, 118), ("Roll bars", "Black roll bars", 186, 94), ("Interior", "Four black seats", 208, 118), ("Spare", "Rear spare", 82, 140)],
+    "four_door_4x4": [("Hardtop", "Removable-style hardtop", 140, 85), ("Door hinges", "Exposed door hinges", 168, 140), ("Spare", "Tailgate-mounted spare", 38, 128), ("Flares", "Flat fender flares and off-road tires", 300, 148)],
+    "two_door_4x4": [("Soft top", "Soft top with a rounded rear bow", 120, 82), ("Door hinges", "Exposed door hinges", 152, 140), ("Spare", "Tailgate-mounted spare", 58, 128), ("Flares", "Flat fender flares and off-road tires", 294, 148)],
+    "open_top_4x4": [("Folded top", "Black soft top folded at the back", 108, 118), ("Roll bars", "Black roll bars", 186, 94), ("Interior", "Four black seats", 208, 118), ("Spare", "Rear spare", 86, 140)],
     "front_loader": [("Bucket", "Loader bucket", 360, 154), ("Lift arms", "Z-bar lift arms", 290, 124), ("Cab", "Tall glass cab", 192, 94), ("Giant tires", "Big loader tires", 282, 168)],
 }
 
@@ -1600,6 +1610,7 @@ def render(body_key, category, body, accent, sku, limited=False):
         '<linearGradient id="spoke" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset=".5" stop-color="#b3bac3"/><stop offset="1" stop-color="#7e8692"/></linearGradient>'
         '<radialGradient id="gunmetal" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#8b9098"/><stop offset=".6" stop-color="#4c5158"/><stop offset="1" stop-color="#26292e"/></radialGradient>'
         '<linearGradient id="whitewall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f5ef"/><stop offset="1" stop-color="#c9c7bd"/></linearGradient>'
+        '<linearGradient id="treadg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0c0d0f"/><stop offset=".45" stroke-width="0" stop-color="#3a3d42"/><stop offset="1" stop-color="#16171a"/></linearGradient>'
         '<linearGradient id="rubber" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3d42"/><stop offset=".2" stop-color="#222428"/><stop offset=".8" stop-color="#16171a"/><stop offset="1" stop-color="#2a2c30"/></linearGradient>'
         '<linearGradient id="well" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#050506"/><stop offset="1" stop-color="#1c1e22"/></linearGradient>'
         '<radialGradient id="lamp" cx=".4" cy=".38" r=".7"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#f4f1e6"/><stop offset=".75" stop-color="#c9c3ae"/><stop offset="1" stop-color="#8e8873"/></radialGradient>'
