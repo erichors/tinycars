@@ -1113,7 +1113,9 @@ def gullwing(c):  # 1980s stainless wedge coupe: gullwing door raised, louvred r
     s += f'<rect x="40" y="160" width="326" height="14" fill="#2a2d33"/>'
     s += poly("M178 104 L244 102 L284 124 L276 150 L182 150 Z", "#24272c") + f'<rect x="206" y="122" width="28" height="28" rx="5" fill="#40444b"/><path d="M262 130 L250 122" stroke="#5a5f67" stroke-width="3"/>'
     s += poly("M134 124 L170 104 L176 104 L176 124 Z", DARK) + "".join(f'<path d="M{x} {124 - (x - 134) * 0.55:.1f} V124" stroke="#4a4e55" stroke-width="1.5"/>' for x in range(142, 176, 6))
-    s += poly("M180 102 L244 100 L262 52 L198 46 Z", b) + poly("M192 92 L238 92 L250 62 L204 58 Z", GLASS)
+    # raised door = the opening mirrored above the roof hinge (x unchanged, height foreshortened), so it fits when closed
+    s += poly("M180 102 L244 100 L284 80 L276 56 L182 56 Z", b) + poly("M186 99 L242 98 L276 81 L186 80 Z", GLASS)
+    s += f'<path d="M183 61 L275 61" stroke="#000" stroke-width="1" opacity=".25"/><path d="M180 102 L244 100" stroke="#000" stroke-width="2" opacity=".5"/>'
     s += f'<path d="M180 102 L244 100" stroke="{DARK}" stroke-width="2"/>'
     s += f'<rect x="344" y="142" width="20" height="5" rx="1" fill="#ffe9a0"/><rect x="40" y="142" width="8" height="10" rx="1" fill="#e03b3b"/>'
     s += f'<path d="M60 150 H160 M300 148 H360" stroke="#000" stroke-width="1" opacity=".25"/>'
@@ -1380,7 +1382,7 @@ ANCH = {
     "fire_suv": [("Light bar", "All-red light bar", 177, 99), ("Stripe", "Reflective side stripe", 120, 150), ("Push bumper", "Front push bumper", 366, 152), ("Wheels", "Five-spoke mag wheels", 300, 178)],
     "steam_roller": [("Chimney", "Tall chimney with brass cap", 295, 60), ("Roller drum", "Front roller drum", 320, 172), ("Flywheel", "Spoked flywheel", 214, 92), ("Canopy", "Canopy on posts", 126, 44)],
     "pinto_compact": [("Hatch glass", "Sloping fastback hatch", 150, 118), ("Bumpers", "Big chrome bumpers", 355, 170), ("Stripe", "Side tape stripe", 200, 147), ("Hubcaps", "Small hubcaps", 296, 180)],
-    "gullwing": [("Gullwing door", "Door raised on its roof hinge", 222, 72), ("Louvers", "Louvered rear glass", 156, 116), ("Interior", "Seat visible through the open door", 221, 142), ("Wheels", "Five-spoke wheels", 306, 178)],
+    "gullwing": [("Gullwing door", "Door raised on its roof hinge", 230, 70), ("Louvers", "Louvered rear glass", 156, 116), ("Interior", "Seat visible through the open door", 221, 142), ("Wheels", "Five-spoke wheels", 306, 178)],
     "four_door_4x4": [("Hardtop", "Removable-style hardtop", 140, 85), ("Door hinges", "Exposed door hinges", 168, 140), ("Spare", "Tailgate-mounted spare", 38, 128), ("Flares", "Flat fender flares and off-road tires", 300, 148)],
     "two_door_4x4": [("Soft top", "Soft top with a rounded rear bow", 120, 82), ("Door hinges", "Exposed door hinges", 152, 140), ("Spare", "Tailgate-mounted spare", 58, 128), ("Flares", "Flat fender flares and off-road tires", 294, 148)],
     "open_top_4x4": [("Folded top", "Black soft top folded at the back", 108, 118), ("Roll bars", "Black roll bars", 186, 94), ("Interior", "Four black seats", 208, 118), ("Spare", "Rear spare", 86, 140)],
