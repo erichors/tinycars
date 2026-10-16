@@ -210,16 +210,21 @@ def sports_car(c):
     return s + wheel(108, 180, 25) + wheel(296, 180, 25)
 
 
-def military_truck(c):
+def military_truck(c):  # wide-track military utility vehicle (generic): flat roof, long flat hood, narrow windows, big tyres
     b, a = c["body"], c["accent"]
-    s = arch(112, 176, 36) + arch(300, 176, 36)
-    s += f'<path d="M92 120 L86 70" stroke="{DARK}" stroke-width="3"/><circle cx="86" cy="68" r="4" fill="{DARK}"/>'
-    s += poly("M46 178 L46 128 L62 120 L140 120 L152 100 L250 100 L262 120 L336 124 L356 134 L356 178 Z", b)
-    s += poly("M160 108 L246 108 L254 120 L156 120 Z", GLASS)
-    s += f'<rect x="60" y="136" width="270" height="9" fill="{a}"/>'
-    s += f'<rect x="52" y="146" width="22" height="22" rx="3" fill="{DARK}"/>'
-    s += f'<rect x="338" y="160" width="20" height="14" fill="{DARK}"/><circle cx="344" cy="142" r="6" fill="#ffe36b"/>'
-    return s + wheel(112, 176, 30) + wheel(300, 176, 30)
+    s = f'<path d="M70 80 L60 20" stroke="{DARK}" stroke-width="1.6"/>'
+    s += poly("M44 166 L44 88 Q44 82 50 82 L236 82 L252 116 L338 118 L356 128 L356 166 Z", b)
+    s += f'<rect x="120" y="76" width="54" height="7" rx="2" fill="{DARK}"/>'
+    s += poly("M60 92 L102 92 L102 112 L60 112 Z", GLASS) + poly("M114 92 L158 92 L158 112 L114 112 Z", GLASS) + poly("M170 92 L210 92 L210 112 L170 112 Z", GLASS) + poly("M218 92 L232 92 L242 112 L218 112 Z", GLASS)
+    s += "".join(f'<path d="M{x} 88 V150" stroke="#000" stroke-width="1.4" opacity=".3"/>' for x in (108, 164, 214, 250))
+    s += "".join(f'<rect x="{x}" y="124" width="12" height="3.4" rx="1.7" fill="{DARK}"/>' for x in (140, 194))
+    s += f'<rect x="44" y="150" width="312" height="16" fill="#2a2e22"/>'
+    for cx in (98, 312):
+        s += poly(f"M{cx - 42} 166 L{cx - 34} 132 L{cx + 34} 132 L{cx + 42} 166 Z", "#16180f")
+    s += "".join(f'<path d="M{x} 118 L{x + 22} 119" stroke="#000" stroke-width="1.2" opacity=".3"/>' for x in (270, 300))
+    s += f'<rect x="350" y="126" width="6" height="22" rx="1" fill="{DARK}"/><rect x="342" y="128" width="8" height="6" rx="1" fill="#ffe9a0"/>'
+    s += f'<rect x="44" y="104" width="5" height="10" rx="1" fill="#e03b3b"/><rect x="348" y="160" width="14" height="8" rx="1" fill="{DARK}"/><rect x="36" y="160" width="12" height="8" rx="1" fill="{DARK}"/>'
+    return s + wheel(98, 175, 30) + wheel(312, 175, 30)
 
 
 def troop_transport(c):
@@ -235,17 +240,22 @@ def troop_transport(c):
     return s + wheel(90, 180, 24) + wheel(160, 180, 24) + wheel(302, 180, 24)
 
 
-def recon(c):
+def recon(c):  # WWII-style quarter-ton scout (generic): short tub, flat hood, upright windshield, open seats, rear spare, jerry can
     b, a = c["body"], c["accent"]
-    s = f'<circle cx="46" cy="152" r="20" fill="{TIRE}"/><circle cx="46" cy="152" r="10" fill="{HUB}"/>'
-    s += arch(104, 178, 33) + arch(300, 178, 33)
-    s += f'<path d="M92 142 L100 96 L150 96 L156 142" fill="none" stroke="{DARK}" stroke-width="6"/>'
-    s += poly("M54 176 L54 142 L150 142 L166 126 L292 130 L330 138 L352 146 L352 176 Z", b)
-    s += poly("M172 128 L192 100 L204 100 L190 130 Z", GLASS)
-    s += f'<rect x="96" y="128" width="54" height="14" rx="4" fill="{DARK}"/>'
-    s += f'<rect x="60" y="150" width="290" height="7" fill="{a}"/>'
-    s += '<circle cx="342" cy="150" r="6" fill="#ffe36b"/>'
-    return s + wheel(104, 178, 28) + wheel(300, 178, 28)
+    s = wheel(82, 142, 22)  # rear-mounted spare, behind the tub
+    s += f'<path d="M102 134 L94 40" stroke="{DARK}" stroke-width="1.6"/><rect x="98" y="128" width="8" height="8" rx="1" fill="{DARK}"/>'
+    s += arch(130, 180, 29) + arch(272, 180, 29)
+    s += poly("M92 178 L92 134 L252 134 L256 130 L312 130 Q318 130 318 137 L318 178 Z", b)
+    s += poly("M178 134 L182 150 Q185 157 195 157 L226 157 Q234 157 236 149 L240 134 Z", "#1f2219")
+    s += f'<rect x="120" y="112" width="16" height="24" rx="3" fill="#4a4630"/><rect x="198" y="110" width="16" height="26" rx="3" fill="#4a4630"/>'
+    s += f'<path d="M238 132 L230 112" stroke="{DARK}" stroke-width="2.6"/><ellipse cx="230" cy="112" rx="8" ry="2.5" fill="{DARK}"/>'
+    s += poly("M244 86 L252 86 L258 134 L250 134 Z", b) + poly("M246.5 90 L250 90 L255 130 L251.5 130 Z", GLASS)
+    s += f'<rect x="96" y="116" width="18" height="20" rx="2" fill="#3b4423"/><path d="M99 120 H111 M99 126 H111" stroke="#000" stroke-width="1" opacity=".35"/>'
+    s += f'<path d="M112 152 L170 152" stroke="#6d4524" stroke-width="3.4" stroke-linecap="round"/><path d="M170 148 L182 148 L184 156 L170 156 Z" fill="{DARK}"/>'
+    s += "".join(f'<path d="M{x} 134 L{x} 144" stroke="#000" stroke-width="1.2" opacity=".3"/>' for x in (270, 278, 286, 294))
+    s += f'<rect x="302" y="125" width="10" height="5" rx="1" fill="{DARK}"/><circle cx="312" cy="144" r="5" fill="#ffe36b"/>'
+    s += f'<rect x="314" y="170" width="12" height="6" rx="1" fill="{DARK}"/><rect x="84" y="170" width="12" height="6" rx="1" fill="{DARK}"/><rect x="92" y="138" width="5" height="9" rx="1" fill="#e03b3b"/>'
+    return s + wheel(130, 180, 25) + wheel(272, 180, 25)
 
 
 def tank(c):
@@ -338,16 +348,21 @@ def crane_truck(c):
     return s + wheel(92, 180, 25) + wheel(152, 180, 25) + wheel(306, 180, 25)
 
 
-def front_loader(c):
+def front_loader(c):  # wheel loader: rear engine hood and counterweight, tall glass cab, Z-bar lift arms, big bucket
     b, a = c["body"], c["accent"]
-    s = arch(120, 172, 40) + arch(292, 172, 40)
-    s += f'<rect x="56" y="118" width="120" height="56" rx="6" fill="{b}"/>'
-    s += f'<rect x="110" y="88" width="72" height="44" rx="6" fill="{b}"/><rect x="120" y="96" width="50" height="26" rx="3" fill="{GLASS}"/>'
-    s += f'<rect x="170" y="128" width="130" height="40" rx="6" fill="{b}"/>'
-    s += f'<path d="M176 136 L300 152" stroke="{DARK}" stroke-width="11" stroke-linecap="round"/><path d="M180 150 L300 164" stroke="{DARK}" stroke-width="6"/>'
-    s += poly("M296 124 L362 114 L370 170 L300 178 Z", a)
-    s += f'<path d="M300 130 L362 122" stroke="{DARK}" stroke-width="3"/>'
-    return s + wheel(120, 172, 34) + wheel(292, 172, 34)
+    s = arch(112, 168, 40) + arch(282, 168, 40)
+    s += f'<rect x="36" y="126" width="18" height="40" rx="4" fill="{DARK}"/>'
+    s += poly("M48 166 L48 120 Q48 112 56 112 L168 112 L176 120 L176 166 Z", b)
+    s += "".join(f'<path d="M{x} 118 V140" stroke="#000" stroke-width="2" opacity=".3"/>' for x in (64, 74, 84, 94))
+    s += f'<rect x="132" y="88" width="8" height="26" fill="{DARK}"/><rect x="130" y="85" width="12" height="4" fill="{CHROME}"/>'
+    s += poly("M150 120 L156 66 L230 66 L238 120 Z", b) + poly("M160 74 L224 74 L230 116 L156 116 Z", GLASS)
+    s += f'<rect x="150" y="60" width="90" height="8" rx="3" fill="{a}"/><path d="M192 74 V116" stroke="{DARK}" stroke-width="3"/>'
+    s += poly("M176 166 L176 124 L250 124 L262 150 L262 166 Z", b)
+    s += f'<path d="M240 130 L330 118 L348 150" stroke="{b}" stroke-width="12" fill="none" stroke-linejoin="round" stroke-linecap="round"/>'
+    s += f'<path d="M246 146 L320 134" stroke="{CHROME}" stroke-width="4"/><path d="M306 116 L322 102 L340 124" stroke="{DARK}" stroke-width="5" fill="none"/>'
+    s += poly("M332 120 L382 112 L388 186 L340 196 L336 170 Z", a) + f'<path d="M340 194 L388 184" stroke="{DARK}" stroke-width="3"/>'
+    s += '<circle cx="246" cy="132" r="5" fill="#ffe36b"/><rect x="48" y="146" width="5" height="9" rx="1" fill="#e03b3b"/>'
+    return s + wheel(112, 168, 36) + wheel(282, 168, 36)
 
 
 # ------------------------------------------------ v2 templates: more silhouettes, not just recolors
@@ -542,14 +557,18 @@ def camper(c):
     return s + wheel(108, 178, 26) + wheel(300, 178, 26)
 
 
-def dune_buggy(c):
+def dune_buggy(c):  # fiberglass-tub beach buggy: curved fenders, exposed rear engine, roll bar, bug-eye lamps, short wheelbase
     b, a = c["body"], c["accent"]
-    s = f'<rect x="76" y="130" width="40" height="24" rx="4" fill="{CHROME}"/><path d="M82 134 V150 M92 134 V150 M102 134 V150 M112 134 V150" stroke="{DARK}" stroke-width="2"/>'
-    s += poly("M84 178 L92 152 L160 148 L206 154 L262 160 L336 170 L344 180 Z", b)
-    s += f'<path d="M110 152 L124 102 L214 102 L236 156 M168 104 L172 154 M124 102 L116 150" stroke="{DARK}" stroke-width="6" fill="none" stroke-linejoin="round"/>'
-    s += f'<rect x="150" y="126" width="34" height="28" rx="9" fill="{a}"/>' + poly("M240 160 L256 138 L262 140 L252 162 Z", GLASS)
-    s += '<circle cx="332" cy="160" r="6" fill="#ffe36b"/>'
-    return s + wheel(108, 172, 34) + wheel(300, 178, 26)
+    s = f'<rect x="56" y="132" width="36" height="30" rx="4" fill="{CHROME}"/>' + "".join(f'<path d="M{x} 136 V158" stroke="{DARK}" stroke-width="2"/>' for x in (62, 70, 78, 86))
+    s += f'<circle cx="74" cy="126" r="8" fill="{DARK}"/><path d="M60 156 Q46 150 44 136" stroke="{CHROME}" stroke-width="4" fill="none" stroke-linecap="round"/>'
+    s += arch(118, 172, 36) + arch(290, 178, 30)
+    s += f'<path d="M152 138 L162 98 L198 98 L204 150" stroke="{DARK}" stroke-width="5" fill="none" stroke-linejoin="round"/>'
+    s += poly("M86 170 L88 142 Q116 116 154 136 L170 150 L234 150 Q246 130 268 128 L310 132 Q334 136 342 156 L342 170 Z", b)
+    s += f'<rect x="188" y="118" width="16" height="34" rx="5" fill="{a}"/><rect x="214" y="122" width="14" height="30" rx="5" fill="{a}"/>'
+    s += poly("M232 130 L240 106 L246 106 L242 132 Z", GLASS) + f'<path d="M240 106 L232 130" stroke="{DARK}" stroke-width="1.6"/>'
+    s += f'<path d="M318 132 L318 124" stroke="{DARK}" stroke-width="2"/><circle cx="318" cy="120" r="7" fill="{CHROME}"/><circle cx="318" cy="120" r="5" fill="#ffe36b"/>'
+    s += '<rect x="86" y="146" width="5" height="9" rx="1" fill="#e03b3b"/>'
+    return s + wheel(118, 172, 32) + wheel(290, 178, 26)
 
 
 def mud_truck(c):
@@ -892,19 +911,21 @@ def bucket_truck(c):  # utility line truck: service body with compartments, outr
     return s + wheel(110, 180, 26) + wheel(312, 180, 26)
 
 
-def sand_rail(c):  # long-travel desert sand rail: tube chassis, rear engine, paddle tyres, light bar and whip flag
+def sand_rail(c):  # long-travel desert sand rail: skinned tube frame, rear engine, coil-overs, paddle tyres, light bar, whip flag
     b, a = c["body"], c["accent"]
-    s = f'<path d="M140 20 L148 98" stroke="{DARK}" stroke-width="1.6"/>' + poly("M140 20 L166 26 L141 34 Z", a)
-    s += f'<path d="M96 170 L170 150 M316 174 L262 150" stroke="{DARK}" stroke-width="5" stroke-linecap="round"/>'
-    s += f'<path d="M112 160 L150 112 M302 164 L278 118" stroke="{CHROME}" stroke-width="6" stroke-linecap="round"/>'
-    s += poly("M120 156 L330 150 L354 158 L340 166 L130 166 Z", b)
-    s += f'<path d="M126 154 L150 96 L250 92 L302 128 L348 150 M150 96 L134 154 M200 94 L198 154 M250 92 L248 152 M128 122 L302 128" stroke="{b}" stroke-width="5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>'
-    s += poly("M302 128 L348 150 L354 158 L302 152 Z", a)
-    s += f'<rect x="200" y="118" width="30" height="34" rx="8" fill="{DARK}"/>'
-    s += f'<rect x="88" y="108" width="40" height="28" rx="4" fill="{CHROME}"/><path d="M96 112 V132 M106 112 V132 M116 112 V132" stroke="{DARK}" stroke-width="2"/><circle cx="108" cy="100" r="8" fill="{DARK}"/>'
-    s += f'<path d="M90 130 Q66 126 60 110" stroke="{CHROME}" stroke-width="4" fill="none" stroke-linecap="round"/>'
-    s += f'<rect x="164" y="86" width="72" height="7" rx="2" fill="{DARK}"/>' + "".join(f'<circle cx="{x}" cy="89.5" r="2.6" fill="#ffe36b"/>' for x in (174, 190, 206, 222))
-    return s + wheel(110, 172, 34, style="chunky") + wheel(318, 176, 28, style="chunky")
+    s = f'<path d="M144 22 L152 100" stroke="{DARK}" stroke-width="1.6"/>' + poly("M144 22 L170 28 L145 36 Z", a)
+    s += f'<rect x="80" y="112" width="44" height="32" rx="4" fill="{CHROME}"/><path d="M88 116 V140 M98 116 V140 M108 116 V140 M118 116 V140" stroke="{DARK}" stroke-width="2"/><circle cx="102" cy="104" r="9" fill="{DARK}"/>'
+    s += f'<path d="M82 136 Q60 132 56 114" stroke="{CHROME}" stroke-width="4" fill="none" stroke-linecap="round"/>'
+    s += f'<path d="M100 168 L176 150 M314 172 L262 150" stroke="{DARK}" stroke-width="6" stroke-linecap="round"/>'
+    s += f'<path d="M126 158 L152 112 M300 160 L282 120" stroke="{CHROME}" stroke-width="7" stroke-linecap="round"/>'
+    s += poly("M130 152 L152 104 L198 102 L198 152 Z", a) + poly("M204 102 L246 100 L294 130 L300 152 L204 152 Z", a)
+    s += poly("M122 150 L322 146 L350 154 L338 166 L128 166 Z", b)
+    s += f'<path d="M126 152 L152 100 L248 98 L300 130 L348 152 M152 100 L132 152 M201 100 L201 152 M248 98 L250 150 M132 126 L300 130" stroke="{b}" stroke-width="6.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>'
+    s += poly("M300 130 L348 152 L356 160 L300 154 Z", b)
+    s += f'<rect x="206" y="116" width="28" height="34" rx="8" fill="{DARK}"/>'
+    s += f'<rect x="166" y="90" width="76" height="8" rx="2" fill="{DARK}"/>' + "".join(f'<circle cx="{x}" cy="94" r="2.8" fill="#ffe36b"/>' for x in (176, 192, 208, 224, 236))
+    s += '<rect x="122" y="140" width="5" height="9" rx="1" fill="#e03b3b"/>'
+    return s + wheel(118, 168, 36, style="chunky") + wheel(314, 174, 30, style="chunky")
 
 
 def flatbed(c):  # flatbed truck: long steel deck with stake pockets, headache rack and a strapped load of crates
@@ -1232,7 +1253,7 @@ META = {
     "kei_3wheel": ("Three-wheel mini truck", ["Single front wheel", "Slatted cargo bed", "Open-sided cab"], "Small steel wheels"),
     "trike_bike": ("Touring trike", ["Twin rear wheels and trunk", "Chrome pipes and fork", "Tank with highlight"], "Wire-style wheels"),
     "monster_truck": ("Giant-wheel show truck", ["Oversize tires with shocks", "Flame decals and roof lamps", "Lifted body shell"], "Giant chunky wheels"),
-    "dune_buggy": ("Dune buggy", ["Roll cage and open seats", "Exposed rear engine", "Big rear tires"], "Big-and-little wheels"),
+    "dune_buggy": ("Fiberglass beach buggy", ["Curved fiberglass tub and fenders", "Exposed rear engine", "Roll bar and bug-eye lamps"], "Big-and-little wheels"),
     "mud_truck": ("Lifted mud truck", ["Lift kit with oversize tires", "Roof lamp bar", "Open bed"], "Chunky off-road wheels"),
     "limo": ("Stretch limousine", ["Extended body with three window panels", "Chrome trim", "Long wheelbase"], "Rolling wheels"),
     "funny_car": ("Drag-strip funny car", ["Long tilt-body shell with giant rear wing", "Header pipes with painted flames", "Huge slick rear tires"], "Slick rear tires"),
@@ -1243,9 +1264,9 @@ META = {
     "ice_cream_truck": ("Ice-cream truck", ["Serving window with striped awning", "Giant roof cone", "Rounded body"], "Rolling wheels"),
     "tow_truck": ("Wrecker tow truck", ["Boom with hook and cable", "Amber roof beacon", "Tandem rear axle"], "Rolling wheels"),
     "garbage_truck": ("Refuse truck", ["Rear lifter arm", "Hopper opening", "Rib panel body"], "Rolling wheels"),
-    "military_truck": ("Utility truck", ["Wide stance with antenna", "Spare can mount", "Big off-road tires"], "Big off-road wheels"),
+    "military_truck": ("Military utility vehicle", ["Flat roof with hatch and antenna", "Long flat hood and narrow windows", "Wide wheel openings and big tires"], "Big off-road wheels"),
     "troop_transport": ("Troop transport", ["Canvas cargo cover with ribs", "Three axles", "Cab with window"], "Rolling wheels"),
-    "recon": ("Open scout vehicle", ["Roll bar and windshield", "Spare tire", "Open cockpit"], "Chunky off-road wheels"),
+    "recon": ("Quarter-ton scout", ["Upright fold-style windshield and open seats", "Rear spare, jerry can and side shovel", "Whip antenna"], "Steel military wheels"),
     "tank": ("Battle tank", ["Rotating-style turret and long barrel", "Road wheels and tracks", "Camo patches"], "Tracked"),
     "armored_carrier": ("Armored carrier", ["Four axles", "Roof turret", "Slit windows"], "Rolling wheels"),
     "fuel_tanker": ("Fuel tanker", ["Tank barrel with bands", "Roof hatch", "Tandem rear axle"], "Rolling wheels"),
@@ -1291,7 +1312,7 @@ ANCH = {
     "camper": [("Awning stripe", "Wavy side stripe", 150, 150), ("Door", "Side door with window", 215, 134), ("Roof A/C", "Roof air-conditioner", 130, 80)],
     "motorhome": [("Windshield", "Panoramic windshield", 342, 102), ("Swoosh stripes", "Three-color swoosh graphics", 180, 140), ("Roof A/C", "Roof air-conditioner", 146, 64)],
     "limo": [("Windows", "Three window panels", 170, 124), ("Chrome trim", "Chrome belt strip", 200, 150), ("Wheels", "Long wheelbase", 318, 178)],
-    "dune_buggy": [("Roll cage", "Tubular roll cage", 170, 102), ("Engine", "Exposed rear engine with fins", 96, 142), ("Big tires", "Big rear tires", 108, 172)],
+    "dune_buggy": [("Roll bar", "Tubular roll bar", 180, 100), ("Engine", "Exposed rear engine with fins", 74, 146), ("Bug-eye lamps", "Chrome bug-eye lamps", 318, 120), ("Big tires", "Big rear tires", 118, 172)],
     "mud_truck": [("Lift kit", "Raised body on a lifted frame", 200, 152), ("Roof lamps", "Roof lamp bar", 258, 62), ("Tires", "Oversize chunky tires", 300, 166)],
     "monster_truck": [("Shocks", "Chrome shocks and springs", 116, 140), ("Flames", "Painted flame decals", 250, 98), ("Giant tires", "Oversize chunky tires", 304, 152)],
     "trike_bike": [("Trunk", "Rear trunk box", 115, 120), ("Pipes", "Chrome exhaust pipes", 140, 168), ("Headlamp", "Chrome headlamp and windscreen", 314, 124), ("Twin wheels", "Two rear wheels", 105, 174)],
@@ -1299,10 +1320,10 @@ ANCH = {
     "funny_car": [("Rear wing", "Giant rear wing", 70, 96), ("Header flames", "Header pipes with flames", 190, 176), ("Slicks", "Huge rear slicks", 100, 164)],
     "dragster": [("Rear wing", "Rear wing and supports", 80, 112), ("Blower", "Supercharger on top of the engine", 214, 128), ("Slicks", "Huge rear slicks", 96, 164)],
     "open_wheel": [("Rear wing", "Rear wing with end plates", 70, 122), ("Helmet", "Driver helmet and visor", 228, 132), ("Wheels", "Exposed racing wheels", 104, 170)],
-    "military_truck": [("Antenna", "Whip antenna", 86, 76), ("Cab", "Narrow window with wide hood", 200, 112), ("Tires", "Big off-road tires", 300, 176)],
+    "military_truck": [("Antenna", "Whip antenna", 64, 40), ("Roof hatch", "Roof hatch", 147, 79), ("Hood", "Long flat hood", 300, 122), ("Tires", "Big off-road tires", 312, 175)],
     "troop_transport": [("Canvas cover", "Ribbed canvas cargo cover", 150, 100), ("Cab", "Cab with window", 300, 108), ("Axles", "Three axles", 125, 180)],
     "fuel_tanker": [("Tank", "Banded tank barrel", 150, 130), ("Hatch", "Roof hatch", 150, 94), ("Axles", "Tandem rear axle", 132, 180)],
-    "recon": [("Roll bar", "Roll bar and windshield", 130, 100), ("Spare", "Spare tire", 46, 152), ("Tires", "Chunky off-road tires", 300, 178)],
+    "recon": [("Windshield", "Upright fold-style windshield", 251, 104), ("Spare", "Rear-mounted spare", 82, 142), ("Jerry can", "Jerry can and side shovel", 105, 124), ("Seats", "Open seats", 206, 120)],
     "tank": [("Barrel", "Long gun barrel with muzzle", 330, 102), ("Turret", "Turret with hatch", 210, 100), ("Tracks", "Road wheels and tracks", 200, 172)],
     "armored_carrier": [("Turret", "Roof turret", 200, 98), ("Slit windows", "Armored slit windows", 110, 124), ("Wheels", "Four axles", 310, 180)],
     "dump_truck": [("Dump bed", "Tilted bed with ribs", 150, 110), ("Hydraulic ram", "Hydraulic lift ram", 212, 136), ("Wheels", "Tandem rear axle", 170, 180)],
@@ -1312,7 +1333,7 @@ ANCH = {
     "crane_truck": [("Boom", "Lattice boom", 210, 70), ("Hook", "Hook and cable", 292, 112), ("Wheels", "Tandem rear axle", 152, 180)],
     "wedge_pickup": [("Light bar", "Full-width light bar across the nose", 360, 130), ("Body planes", "Flat stainless panels, no curves", 214, 100), ("Sail panel", "Covered bed sloping off the roof", 90, 118), ("Wheels", "Aero disc wheel covers", 300, 178)],
     "bucket_truck": [("Work bucket", "Fiberglass bucket for the line crew", 111, 36), ("Boom", "Two-section articulating boom", 140, 76), ("Compartments", "Service-body tool compartments", 66, 142), ("Outrigger", "Stabilizer leg and pad", 58, 190)],
-    "sand_rail": [("Whip flag", "Antenna flag for the dunes", 152, 27), ("Light bar", "Roof light bar", 200, 89), ("Engine", "Exposed rear engine with air filter", 108, 118), ("Paddle tires", "Paddle-style rear tires", 110, 172)],
+    "sand_rail": [("Whip flag", "Antenna flag for the dunes", 156, 29), ("Light bar", "Roof light bar", 204, 94), ("Engine", "Exposed rear engine with air filter", 102, 120), ("Paddle tires", "Paddle-style rear tires", 118, 168)],
     "flatbed": [("Crates", "Strapped load of wooden crates", 84, 126), ("Headache rack", "Protects the cab from the load", 238, 124), ("Deck", "Steel deck with stake pockets", 140, 156), ("Wheels", "Tandem rear axle", 128, 180)],
     "tractor": [("Rear tire", "Giant ribbed rear tire", 122, 140), ("Exhaust stack", "Vertical exhaust stack", 293, 80), ("Cab", "Roll-over cab with seat and wheel", 166, 92), ("Grille", "Front grille and hood", 341, 138)],
     "backhoe": [("Backhoe arm", "Rear digging arm with bucket", 40, 90), ("Loader bucket", "Front loader bucket", 364, 148), ("Cab", "Glass cab", 180, 98), ("Stabilizer", "Stabilizer leg and pad", 78, 186)],
@@ -1326,7 +1347,7 @@ ANCH = {
     "gullwing": [("Gullwing door", "Door raised on its roof hinge", 222, 72), ("Louvers", "Louvered rear glass", 156, 116), ("Interior", "Seat visible through the open door", 221, 142), ("Wheels", "Five-spoke wheels", 306, 178)],
     "four_door_4x4": [("Hardtop", "Removable-style hardtop", 140, 85), ("Door hinges", "Exposed door hinges", 168, 140), ("Spare", "Tailgate-mounted spare", 36, 128), ("Flares", "Flat fender flares and off-road tires", 300, 148)],
     "two_door_4x4": [("Soft top", "Soft top with a rounded rear bow", 120, 82), ("Door hinges", "Exposed door hinges", 152, 140), ("Spare", "Tailgate-mounted spare", 56, 128), ("Flares", "Flat fender flares and off-road tires", 294, 148)],
-    "front_loader": [("Bucket", "Loader bucket", 332, 148), ("Lift arms", "Hydraulic lift arms", 240, 146), ("Giant tires", "Big loader tires", 292, 172)],
+    "front_loader": [("Bucket", "Loader bucket", 360, 154), ("Lift arms", "Z-bar lift arms", 290, 124), ("Cab", "Tall glass cab", 192, 94), ("Giant tires", "Big loader tires", 282, 168)],
 }
 
 def _trim(key):
