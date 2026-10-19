@@ -27,11 +27,15 @@ The store agent writes log text; it does not touch SSH, scan anything, or edit r
 | `store_file_integrity_alert` (pick a store) | `/var/log/tinycars/<store>/audit.log` + `store.log` | auditd-style `SYSCALL` + `PATH` lines for edits to `/etc/tinycars/pos.conf`, `/etc/ssh/sshd_config`, `/etc/passwd`, `/etc/sudoers.d/pos` (key `tinycars_config`) | Any write to a watched path outside a change window |
 | `impossible_travel` | `store.log` for two stores | Same `account` completes an in-store sale in Boston or Chicago, then in London 20-60s later (`correlation=impossible_travel_leg1/leg2`) | Same account in two countries within minutes (real travel is physically impossible) |
 
+## Web sign-in events (always on)
+
+The catalog service logs every shopper sign-in as JSON: `event_type=auth.login_success` or `auth.login_failed` with `user`, `reason` (`bad_password` or `unknown_user`) and `client_ip`. The loadgen produces a steady trickle of failures (about 5% of its sign-ins), which is a good baseline for a "failed logins per user or IP" detection on the web side to sit next to the store SSH patterns.
+
 Baseline noise is always on: normal `Accepted publickey` and `sudo` lines plus an occasional single mistyped password, so detections have to tell signal from noise.
 
 ## Useful fields
 
-- App logs (JSON): `service`, `level`, `msg`, `pattern`, `pattern_level`, `order_id`, `email`
+- App logs (JSON): `service`, `level`, `msg`, `pattern`, `pattern_level`, `order_id`, `email`, and for sign-ins `event_type`, `user`, `reason`, `client_ip`
 - Store logs (JSON): `store`, `city`, `country`, `host`, `client_ip`, `event`, `account`, `order_id`, `total`, `currency`, `correlation`
 - Security lines after parsing: `host`, `process`, `auth_user`, `src_ip`, `src_port`
 - Resource attributes: `service.name`, `service.namespace=tinycars`, `deployment.environment`

@@ -8,6 +8,7 @@ Writes:
   docs/contact-sheet.png            (if pillow + resvg-py or cairosvg are installed)
 Deterministic: same output every run.
 """
+import hashlib
 import json
 import os
 import random
@@ -129,6 +130,28 @@ LAST = ["smith", "patel", "nguyen", "garcia", "okafor", "kim", "murphy", "rossi"
         "walker", "singh", "lopez", "hughes", "novak"]
 
 
+# Demo shopper accounts (all fake, example.com). Every account uses the password DEMO_PASSWORD.
+DEMO_PASSWORD = "tinycars"
+CUSTOMERS = [  # (email, name, city, home_store, member_since)
+    ("alex.rivera@example.com", "Alex Rivera", "Boston, MA", "boston", "2023-03-14"),
+    ("priya.patel@example.com", "Priya Patel", "Chicago, IL", "chicago", "2022-11-02"),
+    ("sam.okafor@example.com", "Sam Okafor", "London, UK", "london", "2024-01-21"),
+    ("jordan.kim@example.com", "Jordan Kim", "Cambridge, MA", "boston", "2023-07-09"),
+    ("casey.nguyen@example.com", "Casey Nguyen", "Evanston, IL", "chicago", "2024-05-30"),
+    ("morgan.rossi@example.com", "Morgan Rossi", "Brighton, UK", "london", "2022-08-18"),
+    ("taylor.brooks@example.com", "Taylor Brooks", "Providence, RI", "boston", "2025-02-11"),
+    ("riley.chen@example.com", "Riley Chen", "Naperville, IL", "chicago", "2023-10-05"),
+    ("jamie.walker@example.com", "Jamie Walker", "Oxford, UK", "london", "2024-09-12"),
+    ("avery.lopez@example.com", "Avery Lopez", "New York, NY", None, "2022-04-27"),
+    ("drew.murphy@example.com", "Drew Murphy", "Austin, TX", None, "2025-06-03"),
+    ("harper.singh@example.com", "Harper Singh", "Seattle, WA", None, "2023-12-19"),
+]
+
+
+def pw_hash(email, password):
+    return hashlib.sha256(f"{email}:{password}".encode()).hexdigest()
+
+
 def esc(s):
     return s.replace("'", "''")
 
@@ -203,12 +226,44 @@ def write_files(rnd, products):
                 q = rnd.randint(40, 220) if loc == "warehouse" else rnd.randint(3, 30)
             sql.append(f"INSERT INTO stock(sku,location,qty) VALUES ('{p['sku']}','{loc}',{q});")
 
+    for email, name, city, store, since in CUSTOMERS:
+        store_sql = f"'{store}'" if store else "NULL"
+        sql.append("INSERT INTO customers(email,name,city,home_store,password_hash,member_since) VALUES "
+                   f"('{email}','{esc(name)}','{esc(city)}',{store_sql},'{pw_hash(email, DEMO_PASSWORD)}','{since}');")
+
+    def order_sql(oid, mins, channel, loc, email, currency, items, rng, status=None):
+        lines, total = [], 0.0
+        for it in items:
+            qty = rng.choices([1, 2, 3, 5], weights=[60, 25, 10, 5])[0]
+            unit = it["gbp"] if currency == "GBP" else it["usd"]
+            total += unit * qty
+            lines.append(f"INSERT INTO order_items(order_id,sku,qty,unit_price) VALUES ('{oid}','{it['sku']}',{qty},{unit});")
+        status = status or rng.choices(["completed", "declined"], weights=[95, 5])[0]
+        return ["INSERT INTO orders(order_id,created_at,channel,location,customer_email,currency,total,status,payment_status) VALUES "
+                f"('{oid}', now() - interval '{mins} minutes','{channel}','{loc}','{email}','{currency}',{total:.2f},"
+                f"'{status}','{'approved' if status == 'completed' else 'declined'}');"] + lines
+
+    # order history for the demo accounts, going back up to 18 months (separate RNG so the rest is stable)
+    hr = random.Random(12)
+    n_hist = 0
+    for email, name, city, store, since in CUSTOMERS:
+        for _ in range(hr.randint(4, 9)):
+            n_hist += 1
+            in_store = store is not None and hr.random() < 0.45
+            loc = store if in_store else "warehouse"
+            currency = "GBP" if (store == "london") else "USD"
+            mins = hr.randint(31 * 24 * 60, 540 * 24 * 60)
+            sql.extend(order_sql(f"ORD-A{n_hist:04d}", mins, "in_store" if in_store else "web", loc, email, currency,
+                                 hr.sample(products, hr.randint(1, 3)), hr, status="completed"))
+
     # historical orders over the last 30 days
     for n in range(1, 421):
         channel = rnd.choices(["web", "in_store"], weights=[55, 45])[0]
         loc = "warehouse" if channel == "web" else rnd.choice(["boston", "chicago", "london"])
         currency = "GBP" if loc == "london" or (channel == "web" and rnd.random() < 0.12) else "USD"
         email = f"{rnd.choice(FIRST)}.{rnd.choice(LAST)}{rnd.randint(1, 99)}@example.com"
+        if rnd.random() < 0.3:  # some recent orders belong to the demo accounts
+            email = rnd.choice(CUSTOMERS)[0]
         items = rnd.sample(products, rnd.randint(1, 4))
         lines, total = [], 0.0
         oid = f"ORD-H{n:04d}"

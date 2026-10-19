@@ -17,6 +17,15 @@ CREATE TABLE IF NOT EXISTS products (
 );
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 
+CREATE TABLE IF NOT EXISTS customers (
+  email         text PRIMARY KEY,
+  name          text NOT NULL,
+  city          text NOT NULL,
+  home_store    text,                  -- boston | chicago | london | NULL (web only)
+  password_hash text NOT NULL,         -- sha256(email || ':' || password); demo accounts only
+  member_since  date NOT NULL DEFAULT current_date
+);
+
 CREATE TABLE IF NOT EXISTS stock (
   sku        text NOT NULL REFERENCES products(sku),
   location   text NOT NULL,           -- warehouse | boston | chicago | london
@@ -37,6 +46,7 @@ CREATE TABLE IF NOT EXISTS orders (
   payment_status text NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at);
+CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_email);
 
 CREATE TABLE IF NOT EXISTS order_items (
   id         serial PRIMARY KEY,

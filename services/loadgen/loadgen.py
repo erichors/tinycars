@@ -23,6 +23,10 @@ MAX_INFLIGHT = int(os.getenv("MAX_INFLIGHT", "150"))
 STORES = ["boston", "chicago", "london"]
 TERMS = ["truck", "coupe", "tank", "gold", "van", "racer", "dozer", "4x4", "classic", "army", "crane", "hatch"]
 FIRST = ["alex", "sam", "jordan", "casey", "riley", "morgan", "taylor", "jamie", "drew", "avery"]
+# Demo accounts seeded by tools/gen_catalog.py (password "tinycars"); ~30% of web shoppers sign in.
+DEMO_USERS = ["alex.rivera", "priya.patel", "sam.okafor", "jordan.kim", "casey.nguyen", "morgan.rossi",
+              "taylor.brooks", "riley.chen", "jamie.walker", "avery.lopez", "drew.murphy", "harper.singh"]
+SIGN_IN_PCT = float(os.getenv("SIGN_IN_PCT", "30"))
 stats = Counter()
 
 
@@ -48,7 +52,17 @@ async def session(client: httpx.AsyncClient, web: bool):
     else:
         channel, location = "in_store", random.choice(STORES)
         currency = "GBP" if location == "london" else "USD"
+    headers = {}
     try:
+        if web and random.random() * 100 < SIGN_IN_PCT:
+            user = random.choice(DEMO_USERS) + "@example.com"
+            pw = "tinycars" if random.random() > 0.05 else "hunter2"  # a few fat-fingered passwords
+            r = await client.post("/api/auth/login", json={"email": user, "password": pw, "remember": False})
+            stats[f"login_{r.status_code}"] += 1
+            if r.status_code == 200:
+                headers = {"x-tc-session": r.json()["token"]}
+                if random.random() < 0.3:
+                    await client.get("/api/account/orders", headers=headers)
         cats = (await client.get("/api/catalog/categories")).json()
         cat = random.choice(cats)["name"]
         prods = (await client.get("/api/catalog/products", params={"category": cat})).json()
@@ -62,7 +76,7 @@ async def session(client: httpx.AsyncClient, web: bool):
         if random.random() < 0.7:
             r = await client.post("/api/checkout", json={
                 "cartId": cart, "email": f"{random.choice(FIRST)}{random.randint(1, 999)}@example.com",
-                "location": location, "channel": channel, "cardNumber": "4242424242424242"})
+                "location": location, "channel": channel, "cardNumber": "4242424242424242"}, headers=headers)
             stats[f"checkout_{r.status_code}"] += 1
         else:
             stats["abandoned"] += 1

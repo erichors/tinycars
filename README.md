@@ -127,3 +127,28 @@ tools/                                                          art + catalog ge
 ## Catalog and detail views
 
 72 cars in 9 categories with 68 distinct generic silhouettes, rendered as studio product shots (lit paint, tinted glass, chrome, detailed wheels and tracks, contact shadows and floor reflections; SVG lighting filters, so they look best in a browser). Click any car for a detail view with hotspot pins, close-up zoom, lightbox, specs and per-store stock. Regenerate art and seed data with `python3 tools/gen_catalog.py`.
+
+## Shopping, accounts and order history
+
+The storefront is laid out like a marketplace: a header with a categories menu, a large search bar, sign-in and a cart, a category row underneath, a split hero, "shop by category" circles and product grids. It uses the AHEAD 2024 palette on a white background.
+
+Twelve demo shoppers are seeded, each with 14 to 28 past orders going back about 18 months (online and in-store). Every demo account uses the password `tinycars`; the sign-in dialog lists them so you can click one.
+
+| Account | Name | Home store |
+|---|---|---|
+| alex.rivera@example.com | Alex Rivera | Boston |
+| priya.patel@example.com | Priya Patel | Chicago |
+| sam.okafor@example.com | Sam Okafor | London |
+| jordan.kim@example.com | Jordan Kim | Boston |
+| casey.nguyen@example.com | Casey Nguyen | Chicago |
+| morgan.rossi@example.com | Morgan Rossi | London |
+| taylor.brooks@example.com | Taylor Brooks | Boston |
+| riley.chen@example.com | Riley Chen | Chicago |
+| jamie.walker@example.com | Jamie Walker | London |
+| avery.lopez@example.com | Avery Lopez | online only |
+| drew.murphy@example.com | Drew Murphy | online only |
+| harper.singh@example.com | Harper Singh | online only |
+
+Signed-in shoppers check out under their account, so new orders appear at the top of **Purchases** (`#/account`). Sessions are kept in Redis (`tc:sess:<token>`, HttpOnly cookie). The loadgen signs in as a demo shopper for about 30% of web sessions (`SIGN_IN_PCT`) and mistypes the password about 5% of the time, so login traces and `auth.login_failed` log events show up without any extra setup.
+
+Static previews of each page are in `docs/` (`storefront-preview.html`, `-categories-`, `-category-`, `-product-`, `-signin-`, `-cart-`, `-account-`); open them in a browser.

@@ -3,6 +3,7 @@
 // Plain app code: no OpenTelemetry imports. Tracing comes from the OTel Operator (inject-nodejs).
 // Serves the UI, proxies /api/* to backend services, and hosts the hidden admin API.
 // Problem-pattern + load state lives in Redis (tc:flags, tc:load).
+const crypto = require('crypto');
 const express = require('express');
 const path = require('path');
 const { createClient } = require('redis');
@@ -82,7 +83,57 @@ async function forward(req, res, base, suffix) {
 }
 app.all('/api/catalog/*', (req, res) => forward(req, res, URLS.catalog, req.originalUrl.replace('/api/catalog', '')));
 app.all('/api/cart/*', (req, res) => forward(req, res, URLS.cart, req.originalUrl.replace('/api', '')));
-app.post('/api/checkout', (req, res) => forward(req, res, URLS.cart, '/checkout'));
+// ---------------------------------------------------------------- shopper accounts (demo logins)
+// Sessions live in Redis (tc:sess:<token>). Browsers get an HttpOnly cookie; scripts (loadgen) may send x-tc-session.
+const SESSION_TTL = 7 * 24 * 3600;
+function sessionToken(req) {
+  if (req.get('x-tc-session')) return req.get('x-tc-session');
+  const m = /(?:^|;\s*)tc_sess=([^;]+)/.exec(req.get('cookie') || '');
+  return m ? decodeURIComponent(m[1]) : null;
+}
+async function currentUser(req) {
+  const t = sessionToken(req);
+  if (!t) return null;
+  try { const v = await redis.get('tc:sess:' + t); return v ? JSON.parse(v) : null; } catch (e) { return null; }
+}
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password, remember = true } = req.body || {};
+  try {
+    const r = await fetch(URLS.catalog + '/customers/login', {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': req.get('x-forwarded-for') || req.ip },
+      body: JSON.stringify({ email, password }), signal: AbortSignal.timeout(5000),
+    });
+    if (r.status === 401) { log('WARN', 'shopper login failed', { user: String(email || '').toLowerCase(), client_ip: req.ip }); return res.status(401).json({ error: 'Wrong email or password' }); }
+    if (!r.ok) return res.status(502).json({ error: 'login unavailable' });
+    const user = await r.json();
+    const token = crypto.randomUUID();
+    await redis.setEx('tc:sess:' + token, SESSION_TTL, JSON.stringify(user));
+    if (remember) res.setHeader('Set-Cookie', `tc_sess=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL}`);
+    log('INFO', 'shopper login', { user: user.email });
+    res.json({ user, token: remember ? undefined : token });
+  } catch (e) {
+    log('ERROR', 'login failed upstream', { error: String(e.message || e) });
+    res.status(502).json({ error: 'login unavailable' });
+  }
+});
+app.get('/api/auth/me', async (req, res) => res.json({ user: await currentUser(req) }));
+app.post('/api/auth/logout', async (req, res) => {
+  const t = sessionToken(req);
+  if (t) { try { await redis.del('tc:sess:' + t); } catch (e) { /* ignore */ } }
+  res.setHeader('Set-Cookie', 'tc_sess=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+  res.json({ user: null });
+});
+app.get('/api/account/orders', async (req, res) => {
+  const user = await currentUser(req);
+  if (!user) return res.status(401).json({ error: 'sign in to see your orders' });
+  forward(req, res, URLS.catalog, '/customers/' + encodeURIComponent(user.email) + '/orders');
+});
+// Signed-in shoppers check out under their account email so the order lands in their history.
+app.post('/api/checkout', async (req, res) => {
+  const user = await currentUser(req);
+  if (user) req.body = { ...(req.body || {}), email: user.email };
+  forward(req, res, URLS.cart, '/checkout');
+});
 app.get('/api/orders/*', (req, res) => forward(req, res, URLS.cart, req.originalUrl.replace('/api', '')));
 app.post('/api/stock/restock', (req, res) => forward(req, res, URLS.inventory, '/restock')); // used by store POS agents
 app.get('/api/stock/*', (req, res) => forward(req, res, URLS.inventory, req.originalUrl.replace('/api', '')));

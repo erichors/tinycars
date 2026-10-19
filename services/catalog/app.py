@@ -3,6 +3,8 @@
 Plain app code: no OpenTelemetry imports. Tracing comes from the OTel Operator
 (inject-python annotation). Problem-pattern state is read from Redis (tc:flags).
 """
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -13,7 +15,7 @@ from contextlib import asynccontextmanager
 from decimal import Decimal
 
 import redis
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Body, FastAPI, HTTPException, Query, Request
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
@@ -143,3 +145,62 @@ def search(q: str = Query(..., min_length=1), limit: int = Query(50, le=100)):
             f"SELECT {COLS} FROM products WHERE name ILIKE %s OR category ILIKE %s OR description ILIKE %s "
             "ORDER BY sku LIMIT %s", (like, like, like, limit)).fetchall()
     return [clean(r) for r in rows]
+
+
+# ---------------------------------------------------------------- customer accounts (demo logins + order history)
+CUSTOMER_COLS = "email,name,city,home_store,member_since"
+
+
+def _profile(row: dict) -> dict:
+    out = clean(row)
+    out["member_since"] = str(out["member_since"])
+    return out
+
+
+@app.post("/customers/login")
+def customer_login(request: Request, body: dict = Body(...)):
+    email = str(body.get("email", "")).strip().lower()
+    password = str(body.get("password", ""))
+    client = request.headers.get("x-forwarded-for", request.client.host if request.client else "")
+    with pool.connection() as conn:
+        row = conn.execute(f"SELECT {CUSTOMER_COLS}, password_hash FROM customers WHERE email = %s", (email,)).fetchone()
+    ok = bool(row) and hmac.compare_digest(row["password_hash"], hashlib.sha256(f"{email}:{password}".encode()).hexdigest())
+    if not ok:
+        # security signal: failed web logins (SIEM-friendly fields)
+        event("customer login failed", logging.WARNING, event_type="auth.login_failed", user=email,
+              reason="unknown_user" if not row else "bad_password", client_ip=client)
+        raise HTTPException(401, "wrong email or password")
+    row.pop("password_hash")
+    event("customer login", event_type="auth.login_success", user=email, client_ip=client)
+    return _profile(row)
+
+
+@app.get("/customers/{email}")
+def customer(email: str):
+    with pool.connection() as conn:
+        row = conn.execute(f"SELECT {CUSTOMER_COLS} FROM customers WHERE email = %s", (email.lower(),)).fetchone()
+    if not row:
+        raise HTTPException(404, "unknown customer")
+    return _profile(row)
+
+
+@app.get("/customers/{email}/orders")
+def customer_orders(email: str, limit: int = Query(50, le=200)):
+    with pool.connection() as conn:
+        orders = conn.execute(
+            "SELECT order_id, created_at, channel, location, currency, total, status FROM orders "
+            "WHERE customer_email = %s ORDER BY created_at DESC LIMIT %s", (email.lower(), limit)).fetchall()
+        ids = [o["order_id"] for o in orders]
+        items = conn.execute(
+            "SELECT oi.order_id, oi.sku, oi.qty, oi.unit_price, p.name, p.image FROM order_items oi "
+            "LEFT JOIN products p ON p.sku = oi.sku WHERE oi.order_id = ANY(%s) ORDER BY oi.id", (ids,)).fetchall() if ids else []
+    by = {}
+    for it in items:
+        by.setdefault(it["order_id"], []).append(clean({k: v for k, v in it.items() if k != "order_id"}))
+    out = []
+    for o in orders:
+        o = clean(o)
+        o["created_at"] = o["created_at"].isoformat()
+        o["items"] = by.get(o["order_id"], [])
+        out.append(o)
+    return out
