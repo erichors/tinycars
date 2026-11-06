@@ -24,6 +24,9 @@ spec:
 {{- end }}
     spec:
       enableServiceLinks: false
+{{- if eq $name "catalog" }}
+      serviceAccountName: {{ $.Values.ai.serviceAccount.name }}
+{{- end }}
       containers:
         - name: {{ $name }}
           image: "{{ $.Values.image.registry }}{{ $svc.image }}:{{ $.Values.image.tag }}"

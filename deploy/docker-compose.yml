@@ -15,6 +15,9 @@ x-app-env: &app-env
   REDIS_PORT: "6379"
   REDIS_URL: redis://redis:6379/0
   CATALOG_URL: http://catalog:8081
+  AI_MATCHER_PROVIDER: ${AI_MATCHER_PROVIDER:-keyword}   # set to bedrock and pass AWS creds to try the model locally
+  AI_MODEL_ID: ${AI_MODEL_ID:-us.anthropic.claude-haiku-5-5}
+  AWS_REGION: ${AWS_REGION:-us-east-1}
   CART_URL: http://cart-checkout:8082
   INVENTORY_URL: http://inventory:8083
   STOREFRONT_URL: http://storefront:8080

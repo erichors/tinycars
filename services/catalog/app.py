@@ -15,6 +15,8 @@ from contextlib import asynccontextmanager
 from decimal import Decimal
 
 import redis
+
+import matcher
 from fastapi import Body, FastAPI, HTTPException, Query, Request
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
@@ -204,3 +206,23 @@ def customer_orders(email: str, limit: int = Query(50, le=200)):
         o["items"] = by.get(o["order_id"], [])
         out.append(o)
     return out
+
+
+# ---------------------------------------------------------------- "Find my car" (AI matcher)
+@app.post("/match")
+def find_my_car(body: dict = Body(...)):
+    text = str(body.get("text", "")).strip()
+    if len(text) < 3:
+        raise HTTPException(400, "tell us a little about yourself first")
+    with pool.connection() as conn:
+        rows = [clean(r) for r in conn.execute(f"SELECT {COLS} FROM products ORDER BY sku").fetchall()]
+    level = flag_level("ai_matcher_slowdown")
+    if level:
+        event("problem pattern active", logging.WARNING, pattern="ai_matcher_slowdown", pattern_level=level)
+    res = matcher.match(text, rows, slowdown_level=level)
+    product = next(p for p in rows if p["sku"] == res["sku"])
+    # never log the shopper's text itself, only its size
+    event("ai match", logging.WARNING if res.get("fallback") else logging.INFO, event_type="ai.match", provider=res["provider"],
+          model=res["model"], fallback=res["fallback"], error=res.get("error"), latency_ms=res["latency_ms"], text_chars=len(text),
+          input_tokens=res.get("input_tokens"), output_tokens=res.get("output_tokens"), sku=res["sku"])
+    return {"product": product, "reason": res["reason"], "provider": res["provider"], "model": res["model"], "fallback": res["fallback"]}

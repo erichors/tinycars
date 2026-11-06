@@ -430,6 +430,45 @@ async function account() {
   }
 }
 
+// ------------------------------------------------------------------ "Find my car" (AI matcher)
+const MATCH_IDEAS = ['Outdoorsy, a bit loud, and I love the 70s', 'Calm, classic, Sunday-drive person', 'Competitive and always early',
+  'I build things and get my hands dirty', 'Quirky, artsy, a little bit silly', 'I help people and stay cool under pressure'];
+function openMatcher() {
+  const root = $('#modalRoot');
+  root.innerHTML = `<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="fmTitle">
+    <div class="sheet wide"><button class="x" id="mClose" aria-label="Close">&times;</button>
+      <h2 id="fmTitle">Find my car</h2><p class="sub">Tell us a little about yourself and we'll pick the TinyCar that fits you.</p>
+      <form id="matchForm" class="form">
+        <textarea name="text" id="matchText" maxlength="300" rows="3" required placeholder="e.g. I'm outdoorsy, a bit loud, and I love the 70s"></textarea>
+        <div class="ideas">${MATCH_IDEAS.map((i) => `<button type="button" data-t="${esc(i)}">${esc(i)}</button>`).join('')}</div>
+        <button class="btn block" type="submit" id="matchGo">Match me</button>
+      </form>
+      <div id="matchOut"></div>
+    </div></div>`;
+  const close = () => { root.innerHTML = ''; };
+  $('#mClose').onclick = close;
+  $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') close(); });
+  $$('.ideas button', root).forEach((b) => b.addEventListener('click', () => { $('#matchText').value = b.dataset.t; $('#matchText').focus(); }));
+  $('#matchForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const out = $('#matchOut'); const go = $('#matchGo');
+    go.disabled = true; go.textContent = 'Finding your car…';
+    out.innerHTML = '<div class="matching"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+    try {
+      const r = await api('/catalog/match', { method: 'POST', body: { text: $('#matchText').value } });
+      const p = r.product;
+      out.innerHTML = `<div class="matchcard"><a href="#/p/${esc(p.sku)}" class="mimg"><img src="${esc(p.image)}" alt="${esc(p.name)}"></a>
+        <div><small>Your TinyCar is</small><h3>${esc(p.name)}</h3><p>${esc(r.reason)}</p><div class="mprice">${price(p)}</div>
+        <div class="mbtns"><button class="btn add" data-sku="${esc(p.sku)}">Add to cart</button><a class="btn ghost" href="#/p/${esc(p.sku)}" id="matchView">View details</a></div>
+        <div class="by">${r.provider === 'bedrock' ? `Matched by Claude on Amazon Bedrock (${esc(r.model)})` : r.fallback ? 'Matched by our quick matcher (the AI matchmaker is busy right now)' : 'Matched by our quick matcher'}</div></div></div>`;
+      $('#matchView').onclick = close;
+    } catch (err) {
+      out.innerHTML = `<div class="msg bad">${esc(err.message)}</div>`;
+    } finally { go.disabled = false; go.textContent = 'Match me again'; }
+  };
+  setTimeout(() => { const i = $('#matchText'); if (i) i.focus(); }, 0);
+}
+
 // ------------------------------------------------------------------ routing + wiring
 async function route() {
   const h = location.hash.replace(/^#/, '') || '/';
@@ -456,6 +495,7 @@ document.addEventListener('click', (e) => {
   if (menu && !e.target.closest('.acct')) menu.hidden = true;
 });
 $('#catBtn').addEventListener('click', () => setMega($('#mega').hidden));
+$('#matchBtn').addEventListener('click', openMatcher);
 $('#searchForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const q = $('#q').value.trim();

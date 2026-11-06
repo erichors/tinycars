@@ -17,6 +17,12 @@ State lives in Redis (`tc:flags`), so a toggle applies within about 2-3 seconds,
 
 Tip: raise the load first (admin panel, "Black Friday" preset) so pool and CPU patterns bite quickly.
 
+## AI pattern
+
+| Pattern | Service | What breaks | What you should see |
+|---|---|---|---|
+| `ai_matcher_slowdown` | catalog | "Find my car" model calls get 0.8 s x level slower; from level 3 they are throttled and the keyword matcher answers instead | `/match` latency rises; `ai match` log lines switch to `fallback: true` with a throttling `error`; the Bedrock span disappears from traces while requests still succeed (graceful degradation) |
+
 ## Store VM / SIEM-style patterns (synthetic log lines only)
 
 The store agent writes log text; it does not touch SSH, scan anything, or edit real files. Attacker addresses use RFC 5737 documentation ranges (203.0.113.x, 198.51.100.x, 192.0.2.x), which are never real hosts.

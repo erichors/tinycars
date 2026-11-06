@@ -138,3 +138,9 @@ Each service gets an OTel Operator `Instrumentation` CR annotation for its langu
 - Marketplace-style UI on white with the AHEAD palette: header with logo (wrench still hidden in it), categories menu, pill search with a round search button, sign-in and cart; category row; split hero plus promo card; category circles; product grids with ratings, favorites and quick add; sort on listings.
 - `customers` table with 12 demo shoppers (password `tinycars`) and seeded order history; catalog endpoints `POST /customers/login`, `GET /customers/{email}`, `GET /customers/{email}/orders`; storefront `/api/auth/login|me|logout` and `/api/account/orders` with Redis-backed sessions; signed-in checkouts use the account email.
 - Loadgen signs in for part of its web traffic; sign-in successes and failures are logged as `auth.*` events.
+
+## 11. Update: Find my car (AI matcher)
+
+- Header button opens a dialog; shopper text (max 300 chars) goes to catalog `POST /match`, which returns one catalog product and a reason.
+- Providers: `keyword` (default, local) and `bedrock` (Converse API, default model `us.anthropic.claude-haiku-5-5`). Output is restricted to catalog SKUs; any failure falls back to keyword. Shopper text is not logged.
+- Helm: `ai.matcher.provider|modelId|region`, catalog service account `tinycars-catalog` for EKS Pod Identity or IRSA. New problem pattern `ai_matcher_slowdown`.

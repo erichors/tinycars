@@ -215,6 +215,10 @@ tail -f /var/log/tinycars/boston/*.log
 
 The SIEM-style patterns (failed-login flood, file-integrity change, impossible travel and others) are toggled from the admin panel and only write log text with RFC 5737 test IPs. They never touch SSH, scan networks or modify system files.
 
+## 8b. Optional: Find my car on Bedrock
+
+The storefront's **Find my car** button works out of the box with a local matcher. To have Claude on Amazon Bedrock pick the car, follow [ai-matcher.md](ai-matcher.md) (IAM policy, EKS Pod Identity, then `--set ai.matcher.provider=bedrock`).
+
 ## 9. Add destinations
 
 In the Bindplane UI add Dynatrace, Grafana, Datadog, Splunk, Google Cloud or anything else as a destination on the three configurations, then roll out. Nothing in this repo changes. Dynatrace uses OTLP/HTTP with a token that has `metrics.ingest`, `logs.ingest` and `openTelemetryTrace.ingest`. Use the `.live.` environment host, not `.apps.`.

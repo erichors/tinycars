@@ -263,12 +263,36 @@ footer.site{background:var(--deep-navy);color:#d7dee6;margin-top:40px}
 .foot a:hover{color:#fff;text-decoration:underline}
 .fine{max-width:1320px;margin:0 auto;padding:12px 28px 22px;font-size:12px;color:var(--footer-gray);border-top:1px solid rgba(255,255,255,.12)}
 
+/* ---------------------------------------------------------------- find my car */
+.matchbtn{display:flex;align-items:center;gap:6px;flex:none;border:2px solid var(--ahead-blue);background:#fff;color:var(--navy);border-radius:9999px;padding:9px 16px;font-weight:500;font-size:14px;cursor:pointer}
+.matchbtn svg{color:var(--ahead-blue)}
+.matchbtn:hover{background:var(--ahead-blue);color:#fff}.matchbtn:hover svg{color:#fff}
+.sheet.wide{width:min(640px,100%)}
+.form textarea{border:1px solid #b8c1c9;border-radius:12px;padding:12px;font-size:15px;font-family:inherit;resize:vertical}
+.form textarea:focus{outline:0;border-color:var(--ahead-blue);box-shadow:0 0 0 3px rgba(0,159,220,.2)}
+.ideas{display:flex;flex-wrap:wrap;gap:6px}
+.ideas button{border:1px solid var(--line);background:#fff;border-radius:9999px;padding:5px 12px;font-size:12.5px;cursor:pointer;color:var(--gray)}
+.ideas button:hover{border-color:var(--ahead-blue);color:var(--navy)}
+.matching{display:flex;justify-content:center;gap:8px;padding:26px}
+.matching .dot{width:10px;height:10px;border-radius:50%;background:var(--ahead-blue);animation:bob 1s infinite}
+.matching .dot:nth-child(2){animation-delay:.15s}.matching .dot:nth-child(3){animation-delay:.3s}
+@keyframes bob{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(-8px);opacity:1}}
+.matchcard{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;align-items:center;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+.matchcard .mimg{display:block;border-radius:14px;overflow:hidden;background:#eceef0}
+.matchcard img{display:block;width:100%;transform:scale(1.06)}
+.matchcard small{color:var(--muted)}
+.matchcard h3{font-family:var(--serif);font-weight:400;font-size:26px;margin:2px 0 6px}
+.matchcard p{margin:0 0 8px;color:var(--gray)}
+.mprice{font-weight:600;font-size:18px;margin-bottom:10px}
+.mbtns{display:flex;gap:8px;flex-wrap:wrap}.mbtns .btn{padding:9px 18px;font-size:14px}
+.by{margin-top:10px;font-size:12px;color:var(--muted)}
+
 @media(max-width:1100px){.grid{grid-template-columns:repeat(4,1fr)}.circle-row{grid-template-columns:repeat(5,1fr)}}
 @media(max-width:860px){
   .bar{flex-wrap:wrap}.search{order:5;flex-basis:100%}
   .heroes,.detail,.cartgrid{grid-template-columns:1fr}.hero-main{grid-template-columns:1fr}.hero-main .pic{min-height:200px}
   .grid{grid-template-columns:repeat(2,1fr)}.circle-row{grid-template-columns:repeat(3,1fr)}
   .aisles{justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap}.mega{width:92vw}.megagrid{grid-template-columns:1fr 1fr}
-  .gallery{grid-template-columns:1fr}.closeups{flex-direction:row;overflow-x:auto;order:2}
+  .gallery{grid-template-columns:1fr}.matchcard{grid-template-columns:1fr}.matchbtn{order:4}.closeups{flex-direction:row;overflow-x:auto;order:2}
   .order header{grid-template-columns:1fr 1fr}.foot{grid-template-columns:1fr}
 }

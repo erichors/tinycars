@@ -152,3 +152,7 @@ Twelve demo shoppers are seeded, each with 14 to 28 past orders going back about
 Signed-in shoppers check out under their account, so new orders appear at the top of **Purchases** (`#/account`). Sessions are kept in Redis (`tc:sess:<token>`, HttpOnly cookie). The loadgen signs in as a demo shopper for about 30% of web sessions (`SIGN_IN_PCT`) and mistypes the password about 5% of the time, so login traces and `auth.login_failed` log events show up without any extra setup.
 
 Static previews of each page are in `docs/` (`storefront-preview.html`, `-categories-`, `-category-`, `-product-`, `-signin-`, `-cart-`, `-account-`); open them in a browser.
+
+## Find my car (AI matcher)
+
+A **Find my car** button in the header lets a shopper describe their personality and get a car picked for them, with a one-line reason. It runs a local keyword matcher by default, so it works anywhere. Set `ai.matcher.provider=bedrock` to have Claude Haiku on Amazon Bedrock make the pick (`us.anthropic.claude-haiku-5-5`). Setup (IAM policy, EKS Pod Identity, verification), log fields and the `ai_matcher_slowdown` problem pattern are in [docs/ai-matcher.md](docs/ai-matcher.md).

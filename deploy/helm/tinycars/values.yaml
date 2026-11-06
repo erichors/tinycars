@@ -18,6 +18,18 @@ otel:
 
 adminToken: "tinycars"    # token for the hidden /admin panel (change it)
 
+# "Find my car": shopper describes their personality, a model picks a car. keyword = no cloud dependency.
+ai:
+  matcher:
+    provider: keyword                       # keyword | bedrock
+    modelId: us.anthropic.claude-haiku-5-5  # Bedrock model or inference-profile ID
+    region: us-east-1
+  # The catalog pod runs as this service account. For Bedrock, give it bedrock:InvokeModel via
+  # EKS Pod Identity (no annotation needed) or IRSA (set the role ARN annotation). See docs/ai-matcher.md.
+  serviceAccount:
+    name: tinycars-catalog
+    annotations: {}                         # e.g. eks.amazonaws.com/role-arn: arn:aws:iam::<acct>:role/tinycars-catalog-bedrock
+
 postgres:
   image: postgres:16-alpine
   user: tinycars

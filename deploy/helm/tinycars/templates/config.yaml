@@ -19,6 +19,9 @@ data:
   # Where telemetry goes: your Bindplane collector. The Operator's Instrumentation CR uses the same value.
   OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.otel.endpoint | quote }}
   OTEL_EXPORTER_OTLP_PROTOCOL: {{ .Values.otel.protocol | quote }}
+  AI_MATCHER_PROVIDER: {{ .Values.ai.matcher.provider | quote }}
+  AI_MODEL_ID: {{ .Values.ai.matcher.modelId | quote }}
+  AWS_REGION: {{ .Values.ai.matcher.region | quote }}
 ---
 apiVersion: v1
 kind: Secret
@@ -42,3 +45,14 @@ data:
 {{ .Files.Get "files/schema.sql" | indent 4 }}
   02-seed.sql: |
 {{ .Files.Get "files/seed.sql" | indent 4 }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.ai.serviceAccount.name }}
+  labels:
+    app.kubernetes.io/part-of: tinycars
+{{- with .Values.ai.serviceAccount.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
