@@ -1,0 +1,9 @@
+# A generic OpenTelemetry Collector receives OTLP; the OpenTelemetry Operator
+# instruments workloads. Change the endpoint to match your collector Service.
+collector:
+  type: otel
+otel:
+  endpoint: http://otel-collector.opentelemetry.svc.cluster.local:4318
+  instrumentation:
+    create: true
+    enabled: true

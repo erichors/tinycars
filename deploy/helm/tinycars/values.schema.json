@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "collector": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["bindplane", "otel", "dynatrace"]
+        }
+      }
+    },
+    "otel": {
+      "type": "object",
+      "required": ["endpoint", "protocol"],
+      "properties": {
+        "endpoint": { "type": "string", "minLength": 1 },
+        "protocol": { "type": "string", "enum": ["http/protobuf", "grpc"] }
+      }
+    }
+  }
+}

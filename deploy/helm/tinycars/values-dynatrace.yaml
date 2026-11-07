@@ -1,0 +1,9 @@
+# Dynatrace Application Monitoring supplies language instrumentation and its
+# in-cluster telemetry-ingest Service receives OTLP.
+collector:
+  type: dynatrace
+otel:
+  endpoint: http://telemetry-ingest.dynatrace.svc.cluster.local:4318
+  instrumentation:
+    create: false
+    enabled: false

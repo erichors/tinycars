@@ -1,8 +1,8 @@
 # Installing TinyCars on Amazon EKS
 
-End-to-end install: EKS cluster, images in ECR, OpenTelemetry Operator, Bindplane collectors, the TinyCars chart, and the store VM. Budget about 45 minutes. Everything is vendor-neutral; Dynatrace, Grafana or any other destination is added later in the Bindplane UI.
+End-to-end install: EKS cluster, images in ECR, collector/instrumentation setup, the TinyCars chart, and the store VM. Budget about 45 minutes. This guide follows the Bindplane path; generic OpenTelemetry and direct Dynatrace alternatives are in [collector options](collectors.md).
 
-> Status: the Python and Node services were tested end to end in a sandbox. The Java and .NET builds, Docker builds, Helm chart and cluster install have **not** been run yet. If a step fails, the error normally points at the fix. Please open an issue or PR with what you changed.
+> Status: all application images, the Helm chart, EKS deployment, Bedrock Pod Identity, and direct Dynatrace collector mode have been tested end to end. Bindplane and generic OTel overlays are Helm-render and schema tested; connect them to your own collector endpoint for runtime verification.
 
 ## 0. Prerequisites
 
@@ -138,6 +138,7 @@ export OTLP_ENDPOINT=http://<service>.<namespace>.svc.cluster.local:4318
 
 helm install tinycars deploy/helm/tinycars \
   --namespace tinycars --create-namespace \
+  -f deploy/helm/tinycars/values-bindplane.yaml \
   --set image.registry=$REGISTRY \
   --set image.tag=$TAG \
   --set otel.endpoint=$OTLP_ENDPOINT \

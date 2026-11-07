@@ -10,11 +10,25 @@ cd "$(dirname "$0")/.."
 REGISTRY="${REGISTRY:-}"
 TAG="${TAG:-1.0.0}"
 PLATFORM="${PLATFORM:-linux/amd64}"   # match your node architecture (use linux/arm64 for Graviton)
+BUILDX_BUILDER="${BUILDX_BUILDER:-}"
+
+buildx_builder_args=()
+if [ -n "$BUILDX_BUILDER" ]; then
+  buildx_builder_args=(--builder "$BUILDX_BUILDER")
+fi
 
 for svc in storefront catalog cart-checkout inventory loadgen; do
   img="${REGISTRY}tinycars-${svc}:${TAG}"
   echo ">> building $img"
-  docker build --platform "$PLATFORM" -t "$img" "services/$svc"
-  if [ -n "$REGISTRY" ]; then docker push "$img"; fi
+  if docker buildx version >/dev/null 2>&1; then
+    if [ -n "$REGISTRY" ]; then
+      docker buildx build "${buildx_builder_args[@]}" --platform "$PLATFORM" -t "$img" --push "services/$svc"
+    else
+      docker buildx build "${buildx_builder_args[@]}" --platform "$PLATFORM" -t "$img" --load "services/$svc"
+    fi
+  else
+    docker build --platform "$PLATFORM" -t "$img" "services/$svc"
+    if [ -n "$REGISTRY" ]; then docker push "$img"; fi
+  fi
 done
 echo "done. helm install tinycars deploy/helm/tinycars --set image.registry=${REGISTRY} --set image.tag=${TAG} ..."

@@ -24,9 +24,20 @@ spec:
 {{- end }}
     spec:
       enableServiceLinks: false
+{{- with $.Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
 {{- if eq $name "catalog" }}
       serviceAccountName: {{ $.Values.ai.serviceAccount.name }}
 {{- end }}
+      initContainers:
+        - name: wait-for-data-services
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z postgres 5432 && nc -z redis 6379; do sleep 2; done
       containers:
         - name: {{ $name }}
           image: "{{ $.Values.image.registry }}{{ $svc.image }}:{{ $.Values.image.tag }}"

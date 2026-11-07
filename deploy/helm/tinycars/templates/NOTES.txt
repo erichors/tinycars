@@ -1,0 +1,8 @@
+TinyCars is configured for the {{ include "tinycars.collectorType" . }} collector mode.
+OTLP endpoint: {{ .Values.otel.endpoint }}
+OpenTelemetry Operator injection: {{ ternary "enabled" "disabled" .Values.otel.instrumentation.enabled }}
+
+Access the private storefront with:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/storefront 8080:{{ .Values.services.storefront.servicePort }}
+
+Then open http://localhost:8080. The wrench opens /admin.

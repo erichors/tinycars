@@ -16,7 +16,8 @@ data:
   CART_URL: "http://cart-checkout:8082"
   INVENTORY_URL: "http://inventory:8083"
   STOREFRONT_URL: "http://storefront:8080"
-  # Where telemetry goes: your Bindplane collector. The Operator's Instrumentation CR uses the same value.
+  # Where telemetry goes. The Operator's Instrumentation CR uses the same value.
+  TINYCARS_COLLECTOR_TYPE: {{ include "tinycars.collectorType" . | quote }}
   OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.otel.endpoint | quote }}
   OTEL_EXPORTER_OTLP_PROTOCOL: {{ .Values.otel.protocol | quote }}
   AI_MATCHER_PROVIDER: {{ .Values.ai.matcher.provider | quote }}

@@ -72,7 +72,15 @@ Optional: **Parse Severity** on `level`, and **Filter**/**Log Sampling** process
    kubectl get svc  -A | grep -i -E 'bindplane|observiq'
    ```
 
-3. Your endpoint for TinyCars is `http://<service>.<namespace>.svc.cluster.local:4318`. Put it in `otel.endpoint` when you install the chart (see the README). This is the only environment-specific value.
+3. Your endpoint for TinyCars is `http://<service>.<namespace>.svc.cluster.local:4318`. Deploy with the explicit Bindplane mode:
+
+   ```bash
+   COLLECTOR_MODE=bindplane \
+   OTLP_ENDPOINT=http://<service>.<namespace>.svc.cluster.local:4318 \
+   ./deploy-eks.sh
+   ```
+
+   For direct Helm use, add `-f deploy/helm/tinycars/values-bindplane.yaml` and override `otel.endpoint`. The Bindplane project secret stays in the collector manifest; TinyCars never needs it.
 
 ## 4. Install the collector on the store VM
 

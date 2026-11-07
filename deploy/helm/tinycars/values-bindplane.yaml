@@ -1,0 +1,8 @@
+# Bindplane receives OTLP; the OpenTelemetry Operator instruments workloads.
+collector:
+  type: bindplane
+otel:
+  endpoint: http://bindplane-node-agent.bindplane-agent.svc.cluster.local:4318
+  instrumentation:
+    create: true
+    enabled: true

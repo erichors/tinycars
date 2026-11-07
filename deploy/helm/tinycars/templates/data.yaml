@@ -32,6 +32,10 @@ spec:
         app.kubernetes.io/part-of: tinycars
     spec:
       enableServiceLinks: false
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
       containers:
         - name: postgres
           image: {{ .Values.postgres.image | quote }}
@@ -120,6 +124,10 @@ spec:
         app.kubernetes.io/part-of: tinycars
     spec:
       enableServiceLinks: false
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
       containers:
         - name: redis
           image: {{ .Values.redis.image | quote }}

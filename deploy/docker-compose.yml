@@ -39,7 +39,14 @@ services:
     command: ["redis-server", "--save", "", "--appendonly", "no"]
   catalog:
     build: ../services/catalog
-    environment: *app-env
+    environment:
+      <<: *app-env
+      # Local Bedrock mode only. run-local.sh obtains temporary credentials from
+      # the selected AWS CLI profile and exports them for Compose interpolation.
+      # Credentials are intentionally provided only to the catalog service.
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
     depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_started } }
   inventory:
     build: ../services/inventory

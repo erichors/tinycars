@@ -5,9 +5,19 @@ image:
   tag: "1.0.0"
   pullPolicy: IfNotPresent
 
+# Pin workloads when application images are built for one architecture. Leave
+# empty for multi-architecture images.
+nodeSelector: {}
+
+# Describes who receives OTLP. This is informational for the workloads and is
+# also surfaced in Helm notes. All modes use the standard otel.* settings.
+collector:
+  type: bindplane        # bindplane | otel | dynatrace
+
 otel:
-  # OTLP/HTTP endpoint of your Bindplane collector as reachable from this cluster.
-  # Find it with: kubectl get svc -A | grep -i -E 'bindplane|observiq'
+  # OTLP/HTTP endpoint reachable from this cluster. Collector-specific example
+  # files live beside this file: values-bindplane.yaml, values-otel.yaml and
+  # values-dynatrace.yaml.
   endpoint: "http://bindplane-node-agent.bindplane-agent.svc.cluster.local:4318"
   protocol: "http/protobuf"
   environment: "demo"     # deployment.environment resource attribute

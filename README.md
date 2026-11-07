@@ -1,6 +1,6 @@
 # TinyCars
 
-A toy-car storefront built as an observability test bed. Five small services in four languages run on any Kubernetes cluster, get auto-instrumented by the OpenTelemetry Operator, and send metrics, traces and logs to a Bindplane collector. A VM simulates three retail stores (Boston, Chicago, London) and produces store and security logs. A hidden admin panel (the wrench in the logo) controls load and switches on problem patterns.
+A toy-car storefront built as an observability test bed. Five small services in four languages run on any Kubernetes cluster and export standard OpenTelemetry data through Bindplane, a generic OpenTelemetry Collector, or Dynatrace's in-cluster OTLP ingest. A VM simulates three retail stores (Boston, Chicago, London) and produces store and security logs. A hidden admin panel (the wrench in the logo) controls load and switches on problem patterns.
 
 ![catalog](docs/contact-sheet.png)
 
@@ -13,13 +13,26 @@ A toy-car storefront built as an observability test bed. Five small services in 
 | `loadgen` | Python (asyncio) | Redis | rate set from the admin panel |
 | store agent (VM) | Python (stdlib only) | none | 3 stores, JSON + syslog-style + audit-style logs |
 
-Design rules: app code contains **no OpenTelemetry or vendor SDKs**; the only environment-specific values are the image registry and the Bindplane OTLP endpoint; nothing is destination-specific. See `docs/spec.md`.
+Design rules: app code contains **no OpenTelemetry or vendor SDKs**; collector type and OTLP endpoint are deployment settings, not application code; nothing is destination-specific. See `docs/spec.md`.
 
 ## What was and was not verified
 
 Tested end to end in a sandbox with real Postgres and Redis: catalog, storefront (UI smoke-tested in jsdom, admin API), loadgen, store agent, the SQL, and the problem-pattern toggles for catalog and storefront. Contract-compatible Python stand-ins were used for `inventory` and `cart-checkout`.
 
-**Not run here, so check first:** the Java and .NET services (the Java was type-checked against stubs; the .NET could not be compiled), the Docker builds, the Helm chart under real `helm` (it was rendered with a small template checker), and everything on a real cluster. If an image fails to build or a pod fails, the error will point at the line; expect one or two small fixes.
+The Java, .NET, Python and Node images, Helm chart, Bedrock matcher and EKS deployment have been tested end to end on the `dynatrace-easytrade` cluster.
+
+For that existing cluster, the full build, ECR push, least-privilege Bedrock Pod Identity setup, Dynatrace namespace setup and Helm deployment are one command:
+
+```bash
+./deploy-eks.sh
+kubectl -n tinycars port-forward svc/storefront 8080:80
+```
+
+The script defaults to `dynatrace-easytrade` in `us-east-1`; override `CLUSTER`, `AWS_REGION`, `AWS_PROFILE`, `ADMIN_TOKEN` or `TAG` as environment variables. It builds on a temporary BuildKit deployment on the cluster's target architecture, so Apple Silicon laptops do not need QEMU emulation.
+
+Choose the telemetry path with `COLLECTOR_MODE=dynatrace|bindplane|otel`.
+Bindplane and generic OTel modes also require `OTLP_ENDPOINT` and the
+OpenTelemetry Operator. See [collector options](docs/collectors.md).
 
 ## Quick start (EKS shown; any Kubernetes works)
 
@@ -27,7 +40,7 @@ Tested end to end in a sandbox with real Postgres and Redis: catalog, storefront
 
 ### 0. Prerequisites
 
-`aws`, `eksctl`, `kubectl`, `helm`, `docker`; a Bindplane Cloud account; a Bindplane collector reachable from the cluster (step 4).
+`aws`, `eksctl`, `kubectl`, `helm`, `docker`; plus the collector selected in [collector options](docs/collectors.md). Bindplane mode requires a Bindplane project and collector; generic OTel mode requires an OTLP collector; Dynatrace mode requires DynaKube Application Monitoring.
 
 ### 1. Cluster
 
@@ -60,6 +73,7 @@ Follow `docs/bindplane-wiring.md` sections 1-3: create the configurations, add y
 
 ```bash
 helm install tinycars deploy/helm/tinycars \
+  -f deploy/helm/tinycars/values-bindplane.yaml \
   --set image.registry=<account>.dkr.ecr.<region>.amazonaws.com/ \
   --set otel.endpoint=http://<node-collector-svc>.<ns>.svc.cluster.local:4318 \
   --set adminToken=<pick-one>
@@ -74,7 +88,7 @@ Postgres seeds 72 cars, per-location stock, and ~420 historical orders on first 
 Open the storefront. Click the small **wrench** that is part of the logo (it is faint until hover) to open the control room, or browse to `/admin`. Enter the token. From there:
 
 - Load: Quiet / Normal / Black Friday presets, sessions-per-minute slider, web vs in-store mix, start/stop.
-- Nine problem-pattern toggles with levels 1-5 (see `docs/patterns-and-siem.md`).
+- Ten problem-pattern toggles with levels 1-5 (see `docs/patterns-and-siem.md`).
 
 ### 7. The store VM
 
@@ -90,6 +104,9 @@ Install the Bindplane collector on the VM from the `tinycars-vm-stores` configur
 
 Bindplane live preview first (traces from five services, container logs, kubelet metrics, VM logs), then your destinations. Walk `docs/patterns-and-siem.md` and flip a pattern to see it land.
 
+For generic OTel or direct Dynatrace collection, use `values-otel.yaml` or
+`values-dynatrace.yaml` instead and follow [collector options](docs/collectors.md).
+
 ## Local preview (no telemetry)
 
 ```bash
@@ -97,6 +114,21 @@ docker compose -f deploy/docker-compose.yml up --build     # http://localhost:80
 ```
 
 Auto-instrumentation comes from the Operator, so compose shows behavior only.
+
+For a one-command local setup using the active AWS CLI profile and Amazon
+Bedrock:
+
+```bash
+./run-local.sh                         # profile "default", Bedrock enabled
+./run-local.sh --profile my-sso        # choose another AWS CLI profile
+./run-local.sh --install-deps          # macOS: install/start Colima + Compose if needed
+./run-local.sh --down                  # stop the stack
+```
+
+The launcher verifies the AWS identity and model access, obtains temporary
+credentials, and passes them only to the catalog container. It does not write
+credentials to the repository. The AWS identity needs `bedrock:InvokeModel`
+for the configured inference profile and underlying model.
 
 ## Useful commands
 
