@@ -7,7 +7,7 @@ A toy-car storefront built as an observability test bed. Five small services in 
 | Service | Language | Datastore | Notes |
 |---|---|---|---|
 | `storefront` | Node.js (Express) | Redis | UI, API gateway, hidden `/admin` |
-| `catalog` | Python (FastAPI) | Postgres | 72 SKUs, search |
+| `catalog` | Python (FastAPI) | Postgres | 75 SKUs, search |
 | `cart-checkout` | Java (JDK HttpServer) | Postgres, Redis | carts in Redis, orders in Postgres |
 | `inventory` | .NET 8 minimal API | Postgres | per-location stock (warehouse, boston, chicago, london) |
 | `loadgen` | Python (asyncio) | Redis | rate set from the admin panel |
@@ -81,7 +81,7 @@ kubectl get pods -w        # wait for everything Running (first Postgres start s
 kubectl get svc storefront # EXTERNAL-IP / hostname = the store
 ```
 
-Postgres seeds 72 cars, per-location stock, and ~420 historical orders on first boot. The loadgen starts at a gentle 20 sessions/min.
+Postgres seeds 75 cars, per-location stock, and ~420 historical orders on first boot. The loadgen starts at a gentle 20 sessions/min.
 
 ### 6. Use it
 
@@ -133,7 +133,7 @@ for the configured inference profile and underlying model.
 ## Useful commands
 
 ```bash
-python3 tools/gen_catalog.py     # regenerate the 72 SVGs and db/seed.sql (deterministic)
+python3 tools/gen_catalog.py     # regenerate the 75 SVGs and db/seed.sql (deterministic)
 helm upgrade tinycars deploy/helm/tinycars --reuse-values --set services.storefront.cpuLimit=500m   # make CPU throttling visible
 helm uninstall tinycars && kubectl delete pvc -l app.kubernetes.io/name=postgres                    # reset data
 ```
@@ -158,7 +158,7 @@ tools/                                                          art + catalog ge
 
 ## Catalog and detail views
 
-72 cars in 9 categories with 68 distinct generic silhouettes, rendered as studio product shots (lit paint, tinted glass, chrome, detailed wheels and tracks, contact shadows and floor reflections; SVG lighting filters, so they look best in a browser). Click any car for a detail view with hotspot pins, close-up zoom, lightbox, specs and per-store stock. Regenerate art and seed data with `python3 tools/gen_catalog.py`.
+75 cars in 9 categories with 71 distinct generic silhouettes, rendered as studio product shots (lit paint, tinted glass, chrome, detailed wheels and tracks, contact shadows and floor reflections; SVG lighting filters, so they look best in a browser). Three original glamorous pink designs—a cabriolet, crossover and crew-cab pickup—use recognizable real-vehicle proportions without licensed branding. Click any car for a detail view with hotspot pins, close-up zoom, lightbox, specs and per-store stock. Regenerate art and seed data with `python3 tools/gen_catalog.py`.
 
 ## Shopping, accounts and order history
 

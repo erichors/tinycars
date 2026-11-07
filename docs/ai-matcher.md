@@ -10,7 +10,7 @@ browser ──POST /api/catalog/match──▶ storefront ──▶ catalog (Pyt
                                                          └── keyword matcher (fallback / default, no cloud)
 ```
 
-- `services/catalog/matcher.py` sends the shopper's text (capped at 300 characters) plus the 72-car catalog as a compact list, and asks for JSON `{"sku", "reason"}`.
+- `services/catalog/matcher.py` sends the shopper's text (capped at 300 characters) plus the 75-car catalog as a compact list, and asks for JSON `{"sku", "reason"}`.
 - The answer is only accepted if the SKU exists in the catalog. Anything else (bad JSON, an invented SKU, "ignore your instructions" text, throttling, timeouts, missing permissions) falls back to the local keyword matcher. The shopper always gets a car.
 - The shopper's text is never logged; the `ai match` log line records provider, model, latency, token counts, fallback reason and the chosen SKU.
 

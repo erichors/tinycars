@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate TinyCars catalog: 72 SKUs, SVG art, and db/seed.sql.
+"""Generate TinyCars catalog: 75 SKUs, SVG art, and db/seed.sql.
 
 Usage: python3 tools/gen_catalog.py
 Writes:
@@ -27,6 +27,7 @@ RED, BLK, MINT, YEL, WHT, BLU, ORG, PUR, TEAL, GRN, CRM = (
 OLV, TAN, DSRT, SLV, NAVY, BRN, LIME, PINK = (
     "#4b5530", "#b39d6c", "#c2a878", "#a9afb7", "#1d2f4f", "#5e3b26", "#8fae2c", "#d77d99")
 RUST, FOREST, SLATE, VINYL, GRAPH = "#8a4424", "#24503c", "#3e5670", "#2b2f38", "#3c4148"
+GLAM_PINK, BLUSH, PEARL = "#e84f96", "#f5abc8", "#fff4f8"
 
 # (name, category, template, era, body, accent, class, blurb)
 CATALOG = [
@@ -114,6 +115,10 @@ CATALOG = [
     ("Steam Roller", "Construction", "steam_roller", "1920s", FOREST, RED, "premium", "Brass-banded boiler, a tall chimney and a big front drum."),
     ("Runabout '74", "Classics & Muscle", "pinto_compact", "1970s", ORG, CRM, "basic", "Little fastback with a hatch, big bumpers and a tape stripe."),
     ("Flux Gullwing", "Sports & Racing", "gullwing", "1980s", SLV, BLK, "premium", "Brushed stainless wedge with its gullwing door up. Just add 88 mph."),
+    # Dream-garage trio: original glamorous pink designs with real vehicle proportions
+    ("Pink Coast Cabriolet", "Sports & Racing", "glam_convertible", "2020s", GLAM_PINK, PEARL, "premium", "A glossy pink four-seat convertible with the top down and the coast ahead."),
+    ("Rose City Crossover", "Off-Roaders", "glam_suv", "2020s", BLUSH, PEARL, "premium", "A polished pink five-door SUV with room for friends, luggage and a weekend away."),
+    ("Sparkle Ranch Pickup", "Pickups", "glam_pickup", "2020s", GLAM_PINK, PEARL, "premium", "A confident pink crew-cab truck with four real doors and a useful short bed."),
 ]
 
 PRICES = {
@@ -123,7 +128,7 @@ PRICES = {
 }
 LOCATIONS = ["warehouse", "boston", "chicago", "london"]
 FX_GBP = 0.79
-NEW_ARRIVAL_NAMES = {"Sunrunner Open-Top", "Ridge Runner 4-Door", "Interceptor SUV", "Fire Chief SUV", "Steam Roller", "Runabout '74", "Flux Gullwing", "Oval Thunder 64", "Big Frank Cruiser", "Stainless Wedge", "Line Crew Bucket Truck", "Desert Sand Rail", "Flatbed Hauler", "Farmhand Tractor", "Dig & Load Backhoe", "Cone Cruiser", "Bog Stomper", "Nitro Funny Car", "Milano Spider", "Trike Cruiser", "Kei Hauler", "Boulevard Convertible"}
+NEW_ARRIVAL_NAMES = {"Pink Coast Cabriolet", "Rose City Crossover", "Sparkle Ranch Pickup", "Sunrunner Open-Top", "Ridge Runner 4-Door", "Interceptor SUV", "Fire Chief SUV", "Steam Roller", "Runabout '74", "Flux Gullwing", "Oval Thunder 64", "Big Frank Cruiser", "Stainless Wedge", "Line Crew Bucket Truck", "Desert Sand Rail", "Flatbed Hauler", "Farmhand Tractor", "Dig & Load Backhoe", "Cone Cruiser", "Bog Stomper", "Nitro Funny Car", "Milano Spider", "Trike Cruiser", "Kei Hauler", "Boulevard Convertible"}
 FIRST = ["alex", "sam", "jordan", "casey", "riley", "morgan", "taylor", "jamie", "drew", "avery",
          "quinn", "reese", "blake", "harper", "skyler", "rowan", "devon", "emery", "finley", "logan"]
 LAST = ["smith", "patel", "nguyen", "garcia", "okafor", "kim", "murphy", "rossi", "chen", "brown",
@@ -159,7 +164,7 @@ def esc(s):
 LENGTH_IN = {"limo": 4.1, "motorhome": 3.9, "school_bus": 3.8, "fire_truck": 3.8, "troop_transport": 3.7, "fuel_tanker": 3.7,
              "crane_truck": 3.8, "dump_truck": 3.6, "garbage_truck": 3.6, "cement_mixer": 3.6, "tow_truck": 3.6, "delivery_van": 3.5,
              "dragster": 4.0, "funny_car": 3.9, "boxy_sedan": 3.5, "city_mini": 2.3, "kei_3wheel": 2.6, "trike_bike": 2.8, "dune_buggy": 2.7,
-             "bucket_truck": 3.7, "flatbed": 3.7, "tractor": 2.6, "backhoe": 3.3, "sand_rail": 2.9, "wedge_pickup": 3.3, "hot_dog": 3.6, "formula_racer": 3.4, "stock_car": 3.1, "police_suv": 3.2, "fire_suv": 3.2, "steam_roller": 2.9, "pinto_compact": 2.9, "gullwing": 3.0, "four_door_4x4": 3.0, "two_door_4x4": 2.7, "open_top_4x4": 2.8}
+             "bucket_truck": 3.7, "flatbed": 3.7, "tractor": 2.6, "backhoe": 3.3, "sand_rail": 2.9, "wedge_pickup": 3.3, "hot_dog": 3.6, "formula_racer": 3.4, "stock_car": 3.1, "police_suv": 3.2, "fire_suv": 3.2, "steam_roller": 2.9, "pinto_compact": 2.9, "gullwing": 3.0, "four_door_4x4": 3.0, "two_door_4x4": 2.7, "open_top_4x4": 2.8, "glam_convertible": 3.0, "glam_suv": 3.2, "glam_pickup": 3.4}
 FINISHES = ["Gloss enamel", "Metallic", "Pearl", "Satin", "Candy"]
 
 
@@ -325,7 +330,7 @@ def contact_sheet(products):
 
 if __name__ == "__main__":
     r, prods = build()
-    assert len(prods) == 72, len(prods)
+    assert len(prods) == 75, len(prods)
     write_files(r, prods)
     contact_sheet(prods)
     print(f"wrote {len(prods)} SKUs, svgs, db/seed.sql")

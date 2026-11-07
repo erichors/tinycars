@@ -873,6 +873,54 @@ def convertible(c):  # big 1960s convertible: top down, boot cover, tail fins, w
     return s + wheel(106, 178, 27, style="steel", white=True) + wheel(304, 178, 27, style="steel", white=True)
 
 
+def glam_convertible(c):  # modern four-seat cabriolet with realistic doors, glass, seats and wheelbase
+    b, a = c["body"], c["accent"]
+    s = arch(108, 180, 29) + arch(300, 180, 29)
+    s += poly("M38 176 L42 154 Q44 144 58 140 L92 134 L126 124 L186 122 L218 132 L320 138 Q350 140 362 152 L366 176 Z", b)
+    s += poly("M126 124 L142 102 L154 102 L146 126 Z", GLASS)                  # raked windshield
+    s += poly("M145 128 Q176 114 216 126 L230 139 L136 139 Z", DARK)          # open cabin
+    s += f'<rect x="158" y="112" width="25" height="27" rx="9" fill="{a}"/><rect x="194" y="116" width="25" height="23" rx="9" fill="{a}"/>'
+    s += f'<path d="M136 140 Q181 130 230 140" fill="none" stroke="{a}" stroke-width="5"/>'
+    s += f'<path d="M42 154 Q192 142 360 156" fill="none" stroke="{CHROME}" stroke-width="2.5" opacity=".8"/>'
+    s += f'<path d="M151 143 L145 172 M226 141 L232 172" stroke="{DARK}" stroke-width="1.5" opacity=".42"/><rect x="184" y="147" width="14" height="3" rx="1.5" fill="{CHROME}"/>'
+    s += f'<ellipse cx="139" cy="105" rx="5" ry="3" fill="{CHROME}"/><path d="M136 107 L142 119" stroke="{DARK}" stroke-width="2"/>'
+    s += f'<path d="M52 166 H350" stroke="{a}" stroke-width="4"/><path d="M38 174 H366" stroke="{CHROME}" stroke-width="4"/>'
+    s += f'<path d="M334 143 Q356 145 362 153 L342 157 Z" fill="url(#lamp)"/><rect x="42" y="148" width="8" height="11" rx="2" fill="url(#tail)"/>'
+    return s + wheel(108, 180, 25, style="mag") + wheel(300, 180, 25, style="mag")
+
+
+def glam_suv(c):  # modern five-door crossover with a believable greenhouse and short overhangs
+    b, a = c["body"], c["accent"]
+    s = arch(106, 180, 31) + arch(302, 180, 31)
+    s += poly("M42 176 L42 112 Q42 100 56 96 L126 86 Q138 80 152 80 L250 80 Q264 80 274 92 L306 120 L344 130 Q360 134 364 150 L364 176 Z", b)
+    s += poly("M56 102 L128 92 L148 88 L148 116 L56 116 Z", GLASS)             # cargo glass
+    s += poly("M155 88 L204 88 L204 116 L155 116 Z", GLASS)                    # rear door glass
+    s += poly("M211 88 L244 88 Q253 88 260 98 L282 119 L211 116 Z", GLASS)     # front door glass
+    s += f'<path d="M151 86 V172 M207 86 V172 M264 98 L269 172 M56 118 L58 172" stroke="{DARK}" stroke-width="1.6" opacity=".42"/>'
+    s += f'<rect x="174" y="126" width="14" height="3" rx="1.5" fill="{CHROME}"/><rect x="226" y="126" width="14" height="3" rx="1.5" fill="{CHROME}"/>'
+    s += f'<path d="M134 79 H252" stroke="{CHROME}" stroke-width="3"/><path d="M138 76 V84 M248 76 V84" stroke="{DARK}" stroke-width="3"/>'
+    s += f'<path d="M278 112 L270 122" stroke="{DARK}" stroke-width="2"/><ellipse cx="280" cy="109" rx="7" ry="4" fill="{b}"/>'
+    s += f'<path d="M50 151 Q200 141 358 153" fill="none" stroke="{a}" stroke-width="4"/><path d="M48 173 H360" stroke="{DARK}" stroke-width="7"/>'
+    s += '<path d="M337 132 Q358 136 363 146 L342 150 Z" fill="url(#lamp)"/><rect x="44" y="130" width="8" height="17" rx="2" fill="url(#tail)"/>'
+    return s + wheel(106, 180, 28, style="mag") + wheel(302, 180, 28, style="mag")
+
+
+def glam_pickup(c):  # modern crew-cab short-bed pickup with distinct cab, bed and four doors
+    b, a = c["body"], c["accent"]
+    s = arch(104, 180, 32) + arch(304, 180, 32)
+    s += poly("M38 176 L40 126 L156 126 L160 176 Z", b)                       # separate short bed
+    s += f'<path d="M42 129 H154" stroke="{a}" stroke-width="7"/><path d="M48 137 H151" stroke="{DARK}" stroke-width="1.5" opacity=".35"/>'
+    s += poly("M156 176 L158 116 L188 88 Q194 82 204 82 L278 82 Q289 82 296 92 L320 120 L350 128 Q366 134 368 150 L368 176 Z", b)
+    s += poly("M178 116 L197 92 L232 92 L232 118 Z", GLASS)
+    s += poly("M239 92 L274 92 Q282 92 287 100 L303 119 L239 118 Z", GLASS)
+    s += f'<path d="M235 90 V174 M292 101 L298 174 M177 119 L181 174" stroke="{DARK}" stroke-width="1.6" opacity=".45"/>'
+    s += f'<rect x="202" y="128" width="13" height="3" rx="1.5" fill="{CHROME}"/><rect x="254" y="128" width="13" height="3" rx="1.5" fill="{CHROME}"/>'
+    s += f'<path d="M306 112 L298 122" stroke="{DARK}" stroke-width="2"/><ellipse cx="308" cy="109" rx="7" ry="4" fill="{b}"/>'
+    s += f'<rect x="174" y="168" width="126" height="6" rx="3" fill="{CHROME}"/><path d="M42 153 H364" stroke="{a}" stroke-width="4"/>'
+    s += '<path d="M343 130 Q363 135 368 145 L347 149 Z" fill="url(#lamp)"/><rect x="39" y="137" width="8" height="16" rx="2" fill="url(#tail)"/>'
+    return s + wheel(104, 180, 29, style="mag") + wheel(304, 180, 29, style="mag")
+
+
 def funny_car(c):  # drag-strip "funny car": long tilt-body shell, giant rear wing, huge slicks, header flames
     b, a = c["body"], c["accent"]
     s = f'<rect x="38" y="92" width="64" height="9" rx="2" fill="{a}"/><rect x="38" y="86" width="5" height="34" fill="{DARK}"/><rect x="97" y="86" width="5" height="34" fill="{DARK}"/><rect x="66" y="101" width="6" height="36" fill="{DARK}"/>'
@@ -1205,6 +1253,7 @@ TEMPLATES = {
     "wedge_pickup": wedge_pickup, "bucket_truck": bucket_truck, "sand_rail": sand_rail,
     "flatbed": flatbed, "tractor": tractor, "backhoe": backhoe,
     "funny_car": funny_car, "monster_truck": monster_truck, "convertible": convertible,
+    "glam_convertible": glam_convertible, "glam_suv": glam_suv, "glam_pickup": glam_pickup,
     "boxy_sedan": boxy_sedan, "wagon_modern": wagon_modern, "rear_engine": rear_engine, "spider": spider,
     "rat_rod": rat_rod, "motorhome": motorhome, "boxy_suv": boxy_suv, "kei_3wheel": kei_3wheel,
     "trike_bike": trike_bike, "city_mini": city_mini, "classic_luxury_suv": classic_luxury_suv,
@@ -1250,6 +1299,9 @@ TRIM = {
     "pickup_classic": dict(front=358, rear=44, belt=124, sill=172, w=(100, 306, 178, 28), doors=[232], handles=[256], mirror=(278, 112), lamp_y=140),
     "pickup_crew": dict(front=368, rear=40, belt=124, sill=172, w=(112, 306, 178, 30), doors=[200, 248], handles=[222, 270], mirror=(312, 108), lamp_y=132),
     "convertible": dict(front=374, rear=26, belt=146, sill=174, w=(106, 304, 178, 27), doors=[180], handles=[160], mirror=None, lamp_y=150),
+    "glam_convertible": dict(front=366, rear=38, belt=142, sill=174, w=(108, 300, 180, 25), doors=[151, 226], handles=[184], mirror=(139, 105), lamp_y=150),
+    "glam_suv": dict(front=364, rear=42, belt=118, sill=174, w=(106, 302, 180, 28), doors=[58, 151, 207, 269], handles=[174, 226], mirror=(280, 109), lamp_y=140),
+    "glam_pickup": dict(front=368, rear=38, belt=120, sill=174, w=(104, 304, 180, 29), doors=[181, 235, 298], handles=[202, 254], mirror=(308, 109), lamp_y=140),
     "roadster": dict(front=364, rear=36, belt=150, sill=176, w=(108, 296, 178, 26), doors=[], handles=[], mirror=None, lamp_y=156),
     "spider": dict(front=366, rear=40, belt=146, sill=176, w=(112, 290, 178, 26), doors=[], handles=[], mirror=None, lamp_y=152),
     "sports_car": dict(front=364, rear=36, belt=146, sill=178, w=(108, 296, 180, 25), doors=[200], handles=[188], mirror=(262, 124), lamp_y=154),
@@ -1271,6 +1323,9 @@ META = {
     "spider": ("Open two-seat spider", ["Open cockpit with two seats", "Shield-style grille", "Wire-style wheels"], "Wire-style wheels"),
     "bug": ("Rounded rear-engine bug", ["Separate fenders and running boards", "Round headlamps with chrome rims", "Chrome bumpers"], "Rolling wheels"),
     "city_mini": ("Micro city car", ["Tiny rounded body", "Rear engine grille", "Chrome bumpers"], "Disc-style wheels"),
+    "glam_convertible": ("Modern four-seat convertible", ["Top-down cabin with four seats", "Raked windshield and two proper doors", "Polished five-spoke wheels"], "Polished five-spoke wheels"),
+    "glam_suv": ("Modern five-door crossover", ["Five-door body with a full glass greenhouse", "Roof rails and protective lower trim", "Short overhangs and road wheels"], "Polished road wheels"),
+    "glam_pickup": ("Modern crew-cab pickup", ["Four-door cab with a separate short bed", "Side step and realistic truck stance", "Polished all-terrain wheels"], "Polished all-terrain wheels"),
     "microbus": ("Split-window microbus", ["Two-tone paint with V-shaped nose stripe", "Panoramic window row", "Chrome bumpers"], "Rolling wheels"),
     "offroader": ("Classic 4x4", ["Roof rack with light bar", "Rear-mounted spare tire", "Lifted stance"], "Chunky off-road wheels"),
     "trail_jeep": ("Open-top trail runner", ["Soft top and windshield frame", "Slotted grille", "Rear spare tire"], "Chunky off-road wheels"),
