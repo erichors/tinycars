@@ -15,8 +15,8 @@ img{max-width:100%}
 header.site{background:var(--white);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
 .bar{max-width:1320px;margin:0 auto;display:flex;align-items:center;gap:18px;padding:14px 28px 8px}
 .logo{display:block;line-height:0;flex:none}
-.wrench{opacity:.16;transition:opacity .2s,transform .3s}
-#wrench:hover .wrench{opacity:1;transform:rotate(-20deg);transform-origin:center}
+.wrench{opacity:.16;transform-box:fill-box;transform-origin:center;transition:opacity .2s,transform .3s}
+#wrench:hover .wrench,#wrench:focus-visible .wrench{opacity:1;transform:rotate(-20deg)}
 .catmenu{position:relative;flex:none}
 .catbtn{display:flex;align-items:center;gap:8px;background:none;border:0;border-radius:9999px;padding:10px 14px;font-size:15px;font-weight:500;color:var(--charcoal);cursor:pointer}
 .catbtn:hover,.catbtn[aria-expanded=true]{background:var(--surface)}

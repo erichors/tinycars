@@ -1,4 +1,7 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# The published application is framework-dependent IL, so the SDK build stage
+# can run on the builder's native architecture. This avoids slow QEMU restores
+# when producing amd64 images from an arm64 development machine.
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY Inventory.csproj .
 RUN dotnet restore

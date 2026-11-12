@@ -1,0 +1,43 @@
+apiVersion: dynatrace.com/v1beta6
+kind: DynaKube
+metadata:
+  name: tinycars
+  namespace: dynatrace
+  labels:
+    dynatrace.com/created-by: tinycars
+spec:
+  apiUrl: https://tjl16204.live.dynatrace.com/api
+  oneAgent:
+    applicationMonitoring: {}
+  activeGate:
+    capabilities:
+      - routing
+      - kubernetes-monitoring
+      - debugging
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1.5Gi
+      limits:
+        cpu: 1000m
+        memory: 1.5Gi
+    useEphemeralVolume: true
+  logMonitoring: {}
+  metadataEnrichment:
+    enabled: true
+  telemetryIngest:
+    protocols:
+      - jaeger
+      - otlp
+      - statsd
+      - zipkin
+    serviceName: telemetry-ingest
+  templates:
+    logMonitoring:
+      imageRef:
+        repository: public.ecr.aws/dynatrace/dynatrace-logmodule
+        tag: 1.325.47.20251022-093211
+    otelCollector:
+      imageRef:
+        repository: public.ecr.aws/dynatrace/dynatrace-otel-collector
+        tag: latest
