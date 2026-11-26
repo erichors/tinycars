@@ -68,7 +68,7 @@ The storefront uses a `Service` of type `LoadBalancer`. The in-tree AWS provisio
 ## 2. Build and push images
 
 ```bash
-for s in storefront catalog cart-checkout inventory loadgen; do
+for s in storefront catalog cart-checkout inventory operations loadgen network-sim; do
   aws ecr create-repository --region $AWS_REGION --repository-name tinycars-$s >/dev/null 2>&1 || true
 done
 aws ecr get-login-password --region $AWS_REGION | \
@@ -173,7 +173,7 @@ Then:
 
 - Open the store, click a car, add it to the cart and check out.
 - Click the faint wrench in the logo (or go to `/admin`), enter `$ADMIN_TOKEN`, and set load to **Normal**.
-- In Bindplane open each configuration and use **Live Preview**. You should see traces from five services, container logs and Kubernetes metrics within about a minute.
+- In Bindplane open each configuration and use **Live Preview**. You should see traces from six services, container logs and Kubernetes metrics within about a minute.
 - Flip a problem pattern (for example `catalog_search_slowdown` at level 2) and watch search latency rise. All patterns are in [patterns-and-siem.md](patterns-and-siem.md).
 
 ## 7. Lock down access
@@ -243,7 +243,7 @@ helm install ... (step 5)
 helm uninstall tinycars -n tinycars
 kubectl delete ns tinycars
 eksctl delete cluster --name $CLUSTER --region $AWS_REGION
-for s in storefront catalog cart-checkout inventory loadgen; do
+for s in storefront catalog cart-checkout inventory operations loadgen network-sim; do
   aws ecr delete-repository --repository-name tinycars-$s --force --region $AWS_REGION; done
 ```
 

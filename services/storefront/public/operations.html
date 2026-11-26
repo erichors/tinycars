@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>TinyCars Operations</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/operations.css">
+</head>
+<body>
+  <div id="gate" class="gate">
+    <div class="gate-card">
+      <div class="eyebrow">TINYCARS / STAFF</div>
+      <h1>Run the whole garage.</h1>
+      <p>Inventory, supplier buying, customer orders, fulfillment, and returns in one place.</p>
+      <form id="login-form"><label for="admin-token">Admin token</label><input id="admin-token" type="password" autocomplete="current-password" required><button class="primary">Open operations</button></form>
+      <p id="gate-message" class="message" role="alert"></p>
+      <a href="/">← Back to shop</a>
+    </div>
+  </div>
+  <div id="shell" class="shell hidden">
+    <aside class="sidebar">
+      <a class="brand" href="/"><span class="brand-mark">TC</span><span><b>TINYCARS</b><small>OPERATIONS</small></span></a>
+      <p class="side-label">Workspace</p>
+      <nav id="navigation" aria-label="Operations sections">
+        <button class="active" data-tab="overview">Overview</button>
+        <button data-tab="inventory">Inventory</button>
+        <button data-tab="purchasing">Buying</button>
+        <button data-tab="orders">Orders & shipping</button>
+        <button data-tab="returns">Returns</button>
+      </nav>
+      <div class="side-bottom"><a href="/admin">Control room ↗</a><a href="/">Customer shop ↗</a><button id="lock">Lock workspace</button></div>
+    </aside>
+    <div class="workspace">
+      <header class="topbar"><span id="section-name">Overview</span><span class="top-actions"><span id="updated">Live operations</span><button id="refresh" type="button">↻ Refresh</button></span></header>
+      <main>
+        <div class="page-head"><div><p class="eyebrow">RETAIL OPERATIONS / BOSTON · CHICAGO · LONDON</p><h1 id="page-title">Good morning, garage.</h1><p id="page-subtitle">Keep orders moving and shelves stocked.</p></div><span class="live-pill"><i></i> LIVE WORKSPACE</span></div>
+        <div id="notice" class="notice hidden" role="status"></div>
+        <section id="overview" class="view active">
+          <div id="kpis" class="kpis"></div>
+          <div class="two-col"><article class="card"><div class="card-head"><div><p class="eyebrow">NEEDS ATTENTION</p><h2>Low stock</h2></div><button data-tab="inventory" class="text-button">View inventory →</button></div><div id="overview-stock"></div></article>
+            <article class="card"><div class="card-head"><div><p class="eyebrow">ORDER FLOW</p><h2>Recent orders</h2></div><button data-tab="orders" class="text-button">Manage orders →</button></div><div id="overview-orders"></div></article></div>
+          <article class="card"><div class="card-head"><div><p class="eyebrow">AUDIT TRAIL</p><h2>Recent stock movements</h2></div></div><div id="overview-movements"></div></article>
+        </section>
+        <section id="inventory" class="view">
+          <div class="section-intro"><h2>Stock at every location</h2><p>Review available units, correct counts, and move stock between sites.</p></div>
+          <div class="filters"><label>Location <select id="stock-location"><option value="">All locations</option><option>warehouse</option><option>boston</option><option>chicago</option><option>london</option></select></label><label class="check"><input id="stock-low" type="checkbox"> Low stock only (&lt; 8)</label><label>Replenish to <input id="reorder-target" type="number" min="8" max="1000" value="30"></label><button id="create-reorder" class="secondary" type="button">Create replenishment PO</button></div>
+          <article class="card"><div class="table-scroll"><table><thead><tr><th>Product</th><th>SKU</th><th>Location</th><th>Available</th><th>Last changed</th></tr></thead><tbody id="stock-rows"></tbody></table></div></article>
+          <div class="two-col"><article class="card"><p class="eyebrow">STOCK CONTROL</p><h2>Adjust inventory</h2><p class="hint">Use a positive or negative quantity. Every change is logged.</p><form id="adjust-form" class="form-grid"><label>Product <select name="sku" data-products required></select></label><label>Location <select name="location" data-locations required></select></label><label>Change in units <input name="delta" type="number" min="-10000" max="10000" placeholder="e.g. -2 or 12" required></label><label>Reason <input name="reason" maxlength="160" placeholder="Cycle count correction" required></label><button class="primary">Record adjustment</button></form></article>
+            <article class="card"><p class="eyebrow">STORE TRANSFER</p><h2>Move stock</h2><p class="hint">The source is checked before units are moved.</p><form id="transfer-form" class="form-grid"><label>Product <select name="sku" data-products required></select></label><label>From <select name="source" data-locations required></select></label><label>To <select name="destination" data-locations required></select></label><label>Quantity <input name="qty" type="number" min="1" max="10000" value="5" required></label><button class="primary">Transfer units</button></form></article></div>
+        </section>
+        <section id="purchasing" class="view">
+          <div class="section-intro"><h2>Buy from suppliers</h2><p>Create purchase orders and receive units into a store or the warehouse.</p></div>
+          <div class="two-col purchasing-grid"><article class="card"><p class="eyebrow">NEW PURCHASE ORDER</p><h2>Order stock</h2><form id="purchase-form" class="form-grid"><label>Supplier <input name="supplier" placeholder="TinyCars Distribution" maxlength="120" required></label><label>Deliver to <select name="destination" data-locations required></select></label><div class="full"><div class="line-head"><b>Items</b><button type="button" id="add-po-line" class="text-button">+ Add item</button></div><div id="po-lines"></div></div><button class="primary">Create purchase order</button></form></article><article class="card"><p class="eyebrow">OPEN AND RECENT</p><h2>Purchase orders</h2><div id="purchase-orders"></div></article></div>
+        </section>
+        <section id="orders" class="view">
+          <div class="section-intro"><h2>Orders & shipping</h2><p>See customer purchases, create demo tracking, and mark deliveries complete.</p></div>
+          <div class="filters"><label>Find order <input id="order-search" type="search" placeholder="Order ID, customer, or location"></label><span class="hint">Shipping is available for paid web orders.</span></div>
+          <article class="card"><div id="orders-list"></div></article>
+          <article class="card"><div class="card-head"><div><p class="eyebrow">FULFILLMENT</p><h2>Shipments</h2></div></div><div id="shipments-list"></div></article>
+        </section>
+        <section id="returns" class="view">
+          <div class="section-intro"><h2>Returns desk</h2><p>Request, inspect, restock, and record simulated refunds against real orders.</p></div>
+          <div class="two-col purchasing-grid"><article class="card"><p class="eyebrow">NEW RETURN</p><h2>Start a return</h2><form id="return-form" class="form-grid"><label>Customer order <input id="return-order" name="order_id" list="recent-return-orders" placeholder="ORD-..." required><datalist id="recent-return-orders"></datalist></label><label>Item <select id="return-sku" name="sku" required></select></label><label>Quantity <input name="qty" type="number" min="1" value="1" required></label><label>Reason <input name="reason" maxlength="200" placeholder="Damaged package" required></label><button class="primary">Request return</button></form></article><article class="card"><p class="eyebrow">RETURN QUEUE</p><h2>Open and recent returns</h2><div id="returns-list"></div></article></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="/operations.js"></script>
+</body>
+</html>

@@ -97,7 +97,7 @@ fi
 docker buildx inspect "$BUILDX_BUILDER" --bootstrap >/dev/null
 
 echo ">> Creating ECR repositories when missing"
-for service_name in storefront catalog cart-checkout inventory loadgen network-sim; do
+for service_name in storefront catalog cart-checkout inventory operations loadgen network-sim; do
   aws ecr describe-repositories --repository-names "tinycars-${service_name}" >/dev/null 2>&1 || \
     aws ecr create-repository --repository-name "tinycars-${service_name}" >/dev/null
 done

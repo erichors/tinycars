@@ -10,6 +10,13 @@ metadata:
     app.kubernetes.io/part-of: tinycars
 spec:
   replicas: {{ $svc.replicas }}
+{{- if eq $name "storefront" }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+{{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ $name }}
@@ -40,7 +47,7 @@ spec:
             - until nc -z postgres 5432 && nc -z redis 6379; do sleep 2; done
       containers:
         - name: {{ $name }}
-          image: "{{ $.Values.image.registry }}{{ $svc.image }}:{{ $.Values.image.tag }}"
+          image: "{{ $.Values.image.registry }}{{ $svc.image }}:{{ $svc.tag | default $.Values.image.tag }}"
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
 {{- if $svc.port }}
           ports:

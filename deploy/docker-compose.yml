@@ -20,6 +20,7 @@ x-app-env: &app-env
   AWS_REGION: ${AWS_REGION:-us-east-1}
   CART_URL: http://cart-checkout:8082
   INVENTORY_URL: http://inventory:8083
+  OPERATIONS_URL: http://operations:8084
   STOREFRONT_URL: http://storefront:8080
   ADMIN_TOKEN: tinycars
 
@@ -56,11 +57,15 @@ services:
     build: ../services/cart-checkout
     environment: *app-env
     depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_started } }
+  operations:
+    build: ../services/operations
+    environment: *app-env
+    depends_on: { postgres: { condition: service_healthy } }
   storefront:
     build: ../services/storefront
     environment: *app-env
     ports: ["8080:8080"]
-    depends_on: [catalog, inventory, cart-checkout]
+    depends_on: [catalog, inventory, cart-checkout, operations]
   loadgen:
     build: ../services/loadgen
     environment: *app-env

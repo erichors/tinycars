@@ -1,6 +1,6 @@
 # TinyCars
 
-A toy-car storefront built as an observability test bed. Five small services in four languages run on any Kubernetes cluster and export standard OpenTelemetry data through Bindplane, a generic OpenTelemetry Collector, or Dynatrace's in-cluster OTLP ingest. A VM simulates three retail stores (Boston, Chicago, London) and produces store and security logs. A hidden admin panel (the wrench in the logo) controls load and switches on problem patterns.
+A toy-car storefront built as an observability test bed. Six small services in four languages run on any Kubernetes cluster and export standard OpenTelemetry data through Bindplane, a generic OpenTelemetry Collector, or Dynatrace's in-cluster OTLP ingest. A VM simulates three retail stores (Boston, Chicago, London) and produces store and security logs. A hidden admin panel (the wrench in the logo) controls load and switches on problem patterns.
 
 ![catalog](docs/contact-sheet.png)
 
@@ -10,6 +10,7 @@ A toy-car storefront built as an observability test bed. Five small services in 
 | `catalog` | Python (FastAPI) | Postgres | 75 SKUs, search |
 | `cart-checkout` | Java (JDK HttpServer) | Postgres, Redis | carts in Redis, orders in Postgres |
 | `inventory` | .NET 8 minimal API | Postgres | per-location stock (warehouse, boston, chicago, london) |
+| `operations` | Python (FastAPI) | Postgres | staff buying, stock control, shipping, returns |
 | `loadgen` | Python (asyncio) | Redis | rate set from the admin panel |
 | store agent (VM) | Python (stdlib only) | none | 3 stores, JSON + syslog-style + audit-style logs |
 
@@ -58,7 +59,7 @@ eksctl create cluster --name tinycars --region us-east-1 --node-type m5.xlarge -
 ### 2. Build and push images
 
 ```bash
-for s in storefront catalog cart-checkout inventory loadgen; do aws ecr create-repository --repository-name tinycars-$s; done
+for s in storefront catalog cart-checkout inventory operations loadgen network-sim; do aws ecr create-repository --repository-name tinycars-$s; done
 aws ecr get-login-password | docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com
 REGISTRY=<account>.dkr.ecr.<region>.amazonaws.com/ TAG=1.0.0 ./deploy/build-push.sh
 ```
@@ -96,6 +97,8 @@ Open the storefront. Click the small **wrench** that is part of the logo (it is 
 
 - Load: Quiet / Normal / Black Friday presets, sessions-per-minute slider, web vs in-store mix, start/stop.
 - Ten problem-pattern toggles with levels 1-5 (see `docs/patterns-and-siem.md`).
+- **Operations** opens the staff workspace for stock, supplier purchase orders,
+  customer orders, demo shipments, and returns (see [operations guide](docs/operations.md)).
 
 ### 7. The store VM
 
@@ -109,7 +112,7 @@ Install the Bindplane collector on the VM from the `tinycars-vm-stores` configur
 
 ### 8. Check the data
 
-Bindplane live preview first (traces from five services, container logs, kubelet metrics, VM logs), then your destinations. Walk `docs/patterns-and-siem.md` and flip a pattern to see it land.
+Bindplane live preview first (traces from six services, container logs, kubelet metrics, VM logs), then your destinations. Walk `docs/patterns-and-siem.md` and flip a pattern to see it land.
 
 For generic OTel or direct Dynatrace collection, use `values-otel.yaml` or
 `values-dynatrace.yaml` instead and follow [collector options](docs/collectors.md).
@@ -148,7 +151,7 @@ helm uninstall tinycars && kubectl delete pvc -l app.kubernetes.io/name=postgres
 ## Layout
 
 ```
-services/{storefront,catalog,cart-checkout,inventory,loadgen}   app code + Dockerfiles
+services/{storefront,catalog,cart-checkout,inventory,operations,loadgen}   app code + Dockerfiles
 store-agent/                                                    VM agent, systemd installer
 db/                                                             schema.sql, generated seed.sql
 deploy/helm/tinycars/                                           Helm chart (values.yaml = all knobs)

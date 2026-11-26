@@ -123,6 +123,18 @@ services:
     memoryRequest: 192Mi
     cpuLimit: ""
     memoryLimit: 512Mi
+  operations:
+    enabled: true
+    image: tinycars-operations
+    port: 8084
+    servicePort: 8084
+    serviceType: ClusterIP
+    inject: python
+    replicas: 1
+    cpuRequest: 75m
+    memoryRequest: 128Mi
+    cpuLimit: ""
+    memoryLimit: 384Mi
   loadgen:
     enabled: true
     image: tinycars-loadgen

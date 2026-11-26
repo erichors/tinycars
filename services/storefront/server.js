@@ -13,6 +13,7 @@ const URLS = {
   catalog: process.env.CATALOG_URL || 'http://catalog:8081',
   cart: process.env.CART_URL || 'http://cart-checkout:8082',
   inventory: process.env.INVENTORY_URL || 'http://inventory:8083',
+  operations: process.env.OPERATIONS_URL || 'http://operations:8084',
 };
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379/0';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'tinycars';
@@ -76,8 +77,9 @@ app.use((req, res, next) => {
 
 app.get('/healthz', (req, res) => res.json({ status: 'ok' }));
 
-async function forward(req, res, base, suffix) {
+async function forward(req, res, base, suffix, passAdmin = false) {
   const opts = { method: req.method, headers: { 'content-type': 'application/json' }, signal: AbortSignal.timeout(20000) };
+  if (passAdmin) opts.headers['x-admin-token'] = req.get('x-admin-token');
   if (!['GET', 'HEAD', 'DELETE'].includes(req.method)) opts.body = JSON.stringify(req.body || {});
   try {
     const r = await fetch(base + suffix, opts);
@@ -160,6 +162,8 @@ function auth(req, res, next) {
   if (req.get('x-admin-token') !== ADMIN_TOKEN) return res.status(401).json({ error: 'unauthorized' });
   next();
 }
+app.all('/api/admin/ops/*', auth, (req, res) => forward(req, res, URLS.operations,
+  req.originalUrl.replace('/api/admin', ''), true));
 async function readLoad() {
   const h = await redis.hGetAll('tc:load');
   return { running: h.running === '1', rpm: Number(h.rpm || 0), web_pct: Number(h.web_pct || 70) };
@@ -336,6 +340,7 @@ app.post('/api/admin/reset', auth, async (req, res) => {
 
 // ---------------------------------------------------------------- static UI
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/operations', (req, res) => res.sendFile(path.join(__dirname, 'public', 'operations.html')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 (async () => {
