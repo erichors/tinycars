@@ -29,6 +29,7 @@
         <button data-tab="purchasing">Buying</button>
         <button data-tab="orders">Orders & shipping</button>
         <button data-tab="returns">Returns</button>
+        <button data-tab="network">Network</button>
       </nav>
       <div class="side-bottom"><a href="/admin">Control room ↗</a><a href="/">Customer shop ↗</a><button id="lock">Lock workspace</button></div>
     </aside>
@@ -64,6 +65,12 @@
         <section id="returns" class="view">
           <div class="section-intro"><h2>Returns desk</h2><p>Request, inspect, restock, and record simulated refunds against real orders.</p></div>
           <div class="two-col purchasing-grid"><article class="card"><p class="eyebrow">NEW RETURN</p><h2>Start a return</h2><form id="return-form" class="form-grid"><label>Customer order <input id="return-order" name="order_id" list="recent-return-orders" placeholder="ORD-..." required><datalist id="recent-return-orders"></datalist></label><label>Item <select id="return-sku" name="sku" required></select></label><label>Quantity <input name="qty" type="number" min="1" value="1" required></label><label>Reason <input name="reason" maxlength="200" placeholder="Damaged package" required></label><button class="primary">Request return</button></form></article><article class="card"><p class="eyebrow">RETURN QUEUE</p><h2>Open and recent returns</h2><div id="returns-list"></div></article></div>
+        </section>
+        <section id="network" class="view">
+          <div class="section-intro"><h2>Store network</h2><p>Live SNMP inventory for Boston, Chicago, and London. Device and interface readings refresh every 30 seconds.</p></div>
+          <div id="network-summary" class="kpis"></div>
+          <div class="filters"><label>Location <select id="network-location"><option value="">All locations</option><option value="boston">Boston</option><option value="chicago">Chicago</option><option value="london">London</option></select></label><label class="check"><input id="network-issues" type="checkbox"> Issues only</label><span id="network-updated" class="hint"></span></div>
+          <div id="network-sites"></div>
         </section>
       </main>
     </div>

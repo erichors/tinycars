@@ -8,7 +8,9 @@ import socket
 import subprocess
 import threading
 import time
+from datetime import datetime, timezone
 from dataclasses import dataclass
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 
@@ -117,6 +119,27 @@ def calculate_rates(previous: dict, current: dict, seconds: float) -> dict:
     return {field: max(0.0, (current[field] - previous[field]) / seconds) for field in COUNTERS}
 
 
+def serve_inventory(inventory: dict, lock: threading.Lock) -> None:
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path not in ("/network", "/healthz"):
+                self.send_error(404)
+                return
+            with lock:
+                body = json.dumps(inventory if self.path == "/network" else {"status": "ok"}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, _format, *_args):
+            pass
+
+    ThreadingHTTPServer(("0.0.0.0", int(os.getenv("NETWORK_API_PORT", "8090"))), Handler).serve_forever()
+
+
 def main() -> None:
     from opentelemetry import metrics
     from opentelemetry.metrics import Observation
@@ -129,8 +152,10 @@ def main() -> None:
     endpoint = os.getenv("OTLP_METRICS_ENDPOINT", "http://telemetry-ingest.dynatrace.svc.cluster.local:4318/v1/metrics")
     interval = max(15, int(os.getenv("SNMP_POLL_INTERVAL_SECONDS", "30")))
     latest: dict[str, list[tuple[float, dict]]] = {key: [] for key in METRIC_NAMES}
+    inventory: dict = {"updated_at": None, "devices": []}
     previous: dict[tuple[str, str], tuple[dict, float]] = {}
     lock = threading.Lock()
+    threading.Thread(target=serve_inventory, args=(inventory, lock), daemon=True).start()
 
     reader = PeriodicExportingMetricReader(OTLPMetricExporter(endpoint=endpoint), export_interval_millis=interval * 1000)
     provider = MeterProvider(resource=Resource.create({"service.name": "tinycars-network-poller", "service.namespace": "tinycars",
@@ -153,6 +178,7 @@ def main() -> None:
     while True:
         started = time.monotonic()
         snapshots: dict[str, list[tuple[float, dict]]] = {key: [] for key in METRIC_NAMES}
+        devices: list[dict] = []
         healthy = 0
         for target in TARGETS:
             try:
@@ -160,6 +186,11 @@ def main() -> None:
                 healthy += 1
                 snapshots["device_up"].append((1, device["attrs"]))
                 snapshots["cpu"].append((device["cpu"], device["attrs"]))
+                row = {"name": target.name, "site": target.site, "type": target.kind,
+                       "address": device["attrs"]["device.address"],
+                       "description": device["attrs"]["device.description"],
+                       "location": device["attrs"]["device.location"],
+                       "cpu_percent": device["cpu"], "up": True, "interfaces": []}
                 now = time.monotonic()
                 for interface in interfaces:
                     attrs = interface["attrs"]
@@ -168,14 +199,23 @@ def main() -> None:
                     old, old_time = previous.get(key, (None, now))
                     rates = calculate_rates(old, interface["counters"], now - old_time)
                     previous[key] = (interface["counters"], now)
+                    row["interfaces"].append({"name": attrs["if.name"], "up": bool(interface["up"]),
+                                              "admin_up": bool(interface["admin_up"]),
+                                              **{f"{field}_per_second": value for field, value in rates.items()}})
                     for field, value in rates.items():
                         snapshots[field].append((value, attrs))
+                devices.append(row)
             except (OSError, subprocess.SubprocessError, ValueError) as error:
                 snapshots["device_up"].append((0, {"tinycars.app": "tinycars", "device.name": target.name,
                                                     "device.site": target.site, "device.type": target.kind}))
-                print(json.dumps({"event": "SNMP_POLL_FAILED", "device": target.name, "error": str(error)[:200]}), flush=True)
+                devices.append({"name": target.name, "site": target.site, "type": target.kind,
+                                "up": False, "interfaces": []})
+                print(json.dumps({"event": "SNMP_POLL_FAILED", "device": target.name,
+                                  "error_type": type(error).__name__}), flush=True)
         with lock:
             latest = snapshots
+            inventory["devices"] = devices
+            inventory["updated_at"] = datetime.now(timezone.utc).isoformat()
         Path("/tmp/tinycars-network-poller-ready").touch()
         print(json.dumps({"event": "SNMP_POLL_COMPLETED", "devices_up": healthy, "targets": len(TARGETS)}), flush=True)
         time.sleep(max(0, interval - (time.monotonic() - started)))

@@ -4,13 +4,14 @@ const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const locations = ['warehouse', 'boston', 'chicago', 'london'];
 const siteTimezones = { warehouse: 'UTC', boston: 'America/New_York', chicago: 'America/Chicago', london: 'Europe/London' };
-const state = { token: sessionStorage.getItem('tc_admin') || '', summary: {}, products: [], stock: [], movements: [], purchaseOrders: [], orders: [], orderResults: null, returnOrder: null, shipments: [], returns: [] };
+const state = { token: sessionStorage.getItem('tc_admin') || '', summary: {}, products: [], stock: [], movements: [], purchaseOrders: [], orders: [], orderResults: null, returnOrder: null, shipments: [], returns: [], network: { devices: [], updated_at: null } };
 const titles = {
   overview: ['Good morning, garage.', 'Keep orders moving and shelves stocked.'],
   inventory: ['Know what is on every shelf.', 'Four locations. One accurate view of stock.'],
   purchasing: ['Keep supply moving.', 'Place orders, then receive units where they are needed.'],
   orders: ['From checkout to doorstep.', 'Track every paid purchase through fulfillment.'],
   returns: ['Make the return journey clear.', 'Record what came back and where it went.'],
+  network: ['Keep every store connected.', 'See the devices and links behind each location.'],
 };
 
 function notify(message, error = false) {
@@ -29,7 +30,7 @@ function gate(message = '') {
 }
 
 async function api(path, method = 'GET', body) {
-  const response = await fetch('/api/admin/ops' + path, {
+  const response = await fetch((path === '/network' ? '/api/admin' : '/api/admin/ops') + path, {
     method,
     headers: { 'x-admin-token': state.token, 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -157,6 +158,7 @@ function renderReturns() {
 
 function renderAll() {
   renderOverview(); renderStock(); renderPurchaseOrders(); renderOrders(); renderReturns();
+  renderNetwork();
   renderStoreClocks();
   $('#updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
 }
@@ -168,6 +170,49 @@ async function refresh() {
   const search = $('#order-search').value.trim();
   state.orderResults = search ? await api('/orders?limit=200&search=' + encodeURIComponent(search)) : null;
   fillSelectors(); renderAll();
+  await refreshNetwork();
+}
+
+function networkIssues(device) {
+  if (!device.up) return ['unreachable'];
+  const issues = [];
+  if (Number(device.cpu_percent) >= 85) issues.push('high CPU');
+  for (const port of device.interfaces || []) {
+    if (port.admin_up && !port.up) issues.push(`${port.name} down`);
+    if (Number(port.in_errors_per_second) >= 2 || Number(port.out_errors_per_second) >= 2) issues.push(`${port.name} errors`);
+    if (Number(port.in_discards_per_second) >= 5 || Number(port.out_discards_per_second) >= 5) issues.push(`${port.name} discards`);
+  }
+  return issues;
+}
+
+function rate(value) { return Number(value || 0).toFixed(1); }
+function bandwidth(value) { return `${(Number(value || 0) / 1024).toFixed(1)} KB/s`; }
+
+function renderNetwork() {
+  const devices = state.network.devices || [];
+  const site = $('#network-location').value;
+  const issuesOnly = $('#network-issues').checked;
+  const issueCount = devices.filter((device) => networkIssues(device).length).length;
+  $('#network-summary').innerHTML = [
+    ['Devices', devices.length], ['Reachable', devices.filter((device) => device.up).length],
+    ['With issues', issueCount], ['Interfaces', devices.reduce((n, device) => n + (device.interfaces || []).length, 0)],
+  ].map(([label, value]) => `<div class="kpi"><span>${label}</span><b>${value}</b></div>`).join('');
+  $('#network-updated').textContent = state.network.updated_at ? `Last polled ${date(state.network.updated_at, 'warehouse')}` : 'Waiting for first poll';
+  $('#network-sites').innerHTML = ['boston', 'chicago', 'london'].filter((location) => !site || site === location).map((location) => {
+    const rows = devices.filter((device) => device.site === location && (!issuesOnly || networkIssues(device).length));
+    const tableRows = rows.map((device) => {
+      const issues = networkIssues(device);
+      const status = !device.up ? 'Down' : issues.length ? 'Issue' : 'Healthy';
+      const interfaces = (device.interfaces || []).map((port) => `<tr class="network-port"><td>↳ ${escapeHtml(port.name)}</td><td>Interface</td><td>${port.up ? 'Up' : 'Down'}</td><td>—</td><td>${bandwidth(port.in_octets_per_second)} in · ${bandwidth(port.out_octets_per_second)} out</td><td>${rate(port.in_errors_per_second)} errors/s · ${rate(port.in_discards_per_second)} discards/s</td></tr>`).join('');
+      return `<tr><td><strong>${escapeHtml(device.name)}</strong><br><small>${escapeHtml(device.location || device.address || '')}</small></td><td>${escapeHtml(device.type)}</td><td><span class="network-status ${status.toLowerCase()}">${status}</span></td><td>${device.cpu_percent == null ? '—' : `${rate(device.cpu_percent)}%`}</td><td>${escapeHtml(device.address || '—')}</td><td>${escapeHtml(issues.join(', ') || '—')}</td></tr>${interfaces}`;
+    }).join('');
+    return `<article class="card network-site"><div class="card-head"><div><p class="eyebrow">${location.toUpperCase()}</p><h2>${location[0].toUpperCase() + location.slice(1)} network</h2></div><span class="hint">${rows.length} devices</span></div><div class="table-scroll"><table><thead><tr><th>Device / interface</th><th>Type</th><th>Status</th><th>CPU</th><th>Address / traffic</th><th>Issues</th></tr></thead><tbody>${tableRows || `<tr><td colspan="6">${empty(issuesOnly ? 'No issues at this location.' : 'No devices reported yet.')}</td></tr>`}</tbody></table></div></article>`;
+  }).join('');
+}
+
+async function refreshNetwork() {
+  try { state.network = await api('/network'); renderNetwork(); }
+  catch (error) { if (state.token) notify(`Network inventory unavailable: ${error.message}`, true); }
 }
 
 function addPoLine() {
@@ -231,6 +276,7 @@ document.addEventListener('click', async (event) => {
 
 document.addEventListener('change', (event) => {
   if (['stock-location', 'stock-low'].includes(event.target.id)) renderStock();
+  if (['network-location', 'network-issues'].includes(event.target.id)) renderNetwork();
   if (event.target.id === 'return-order') {
     const id = event.target.value.trim();
     if (!id) { state.returnOrder = null; fillReturnItems(); return; }
@@ -276,6 +322,7 @@ document.addEventListener('submit', async (event) => {
 addPoLine();
 renderStoreClocks();
 setInterval(renderStoreClocks, 30000);
+setInterval(() => { if (state.token && !$('#shell').classList.contains('hidden') && $('#network').classList.contains('active')) refreshNetwork(); }, 30000);
 if (state.token) {
   api('/summary').then(() => { $('#gate').classList.add('hidden'); $('#shell').classList.remove('hidden'); return refresh(); })
     .catch((error) => { if (state.token) gate(error.message); });

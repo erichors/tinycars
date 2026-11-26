@@ -16,6 +16,7 @@ data:
   CART_URL: "http://cart-checkout:8082"
   INVENTORY_URL: "http://inventory:8083"
   OPERATIONS_URL: "http://operations:8084"
+  NETWORK_URL: "http://network-poller:8090"
   STOREFRONT_URL: {{ printf "http://storefront:%v" .Values.services.storefront.servicePort | quote }}
   # Where telemetry goes. The Operator's Instrumentation CR uses the same value.
   TINYCARS_COLLECTOR_TYPE: {{ include "tinycars.collectorType" . | quote }}

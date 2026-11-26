@@ -77,6 +77,10 @@ Each series includes `tinycars.app=tinycars`, `device.name`, `device.site`,
 the `tinycars.network.*` namespace and include device availability and CPU,
 interface operational status, per-second errors/discards, and throughput.
 Throughput uses 64-bit IF-MIB counters to handle the high-volume WAN scenario.
+The same poll snapshot powers **Operations → Network** on the TinyCars site,
+where staff can see all 27 devices, 60 interfaces, current status, traffic,
+and fault indicators. This site view is independent of native Dynatrace
+network-device entities.
 
 Enable with `networkPoller.enabled=true` when `networkSimulator.enabled=true`.
 The endpoint defaults to the chart's `otel.endpoint` plus `/v1/metrics`.

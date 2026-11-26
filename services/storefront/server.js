@@ -14,6 +14,7 @@ const URLS = {
   cart: process.env.CART_URL || 'http://cart-checkout:8082',
   inventory: process.env.INVENTORY_URL || 'http://inventory:8083',
   operations: process.env.OPERATIONS_URL || 'http://operations:8084',
+  network: process.env.NETWORK_URL || 'http://network-poller:8090',
 };
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379/0';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'tinycars';
@@ -167,6 +168,7 @@ function auth(req, res, next) {
 }
 app.all('/api/admin/ops/*', auth, (req, res) => forward(req, res, URLS.operations,
   req.originalUrl.replace('/api/admin', ''), true));
+app.get('/api/admin/network', auth, (req, res) => forward(req, res, URLS.network, '/network'));
 async function readLoad() {
   const h = await redis.hGetAll('tc:load');
   return { running: h.running === '1', rpm: Number(h.rpm || 0), web_pct: Number(h.web_pct || 70) };
