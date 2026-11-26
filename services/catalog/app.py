@@ -1,7 +1,7 @@
 """TinyCars catalog service (Python / FastAPI).
 
-Plain app code: no OpenTelemetry imports. Tracing comes from the OTel Operator
-(inject-python annotation). Problem-pattern state is read from Redis (tc:flags).
+Plain app code: no telemetry imports. Tracing comes from OneAgent injection.
+Problem-pattern state is read from Redis (tc:flags).
 """
 import hashlib
 import hmac
@@ -212,17 +212,29 @@ def customer_orders(email: str, limit: int = Query(50, le=200)):
 @app.post("/match")
 def find_my_car(body: dict = Body(...)):
     text = str(body.get("text", "")).strip()
+    scenario = matcher.prompt_scenario(str(body.get("scenario", "personality")))
     if len(text) < 3:
         raise HTTPException(400, "tell us a little about yourself first")
     with pool.connection() as conn:
         rows = [clean(r) for r in conn.execute(f"SELECT {COLS} FROM products ORDER BY sku").fetchall()]
-    level = flag_level("ai_matcher_slowdown")
-    if level:
-        event("problem pattern active", logging.WARNING, pattern="ai_matcher_slowdown", pattern_level=level)
-    res = matcher.match(text, rows, slowdown_level=level)
+    levels = {name: flag_level(name) for name in
+              ("ai_matcher_slowdown", "ai_hallucination", "ai_prompt_guardrail")}
+    for name, level in levels.items():
+        if level:
+            event("problem pattern active", logging.WARNING, pattern=name, pattern_level=level)
+    res = matcher.match(text, rows, slowdown_level=levels["ai_matcher_slowdown"],
+                        hallucination_level=levels["ai_hallucination"],
+                        guardrail_level=levels["ai_prompt_guardrail"], scenario=scenario)
     product = next(p for p in rows if p["sku"] == res["sku"])
     # never log the shopper's text itself, only its size
     event("ai match", logging.WARNING if res.get("fallback") else logging.INFO, event_type="ai.match", provider=res["provider"],
           model=res["model"], fallback=res["fallback"], error=res.get("error"), latency_ms=res["latency_ms"], text_chars=len(text),
-          input_tokens=res.get("input_tokens"), output_tokens=res.get("output_tokens"), sku=res["sku"])
-    return {"product": product, "reason": res["reason"], "provider": res["provider"], "model": res["model"], "fallback": res["fallback"]}
+          input_tokens=res.get("input_tokens"), output_tokens=res.get("output_tokens"), sku=res["sku"],
+          finish_reason=res.get("finish_reason"), ai_quality_issue=res.get("ai_quality_issue"),
+          prompt_scenario=res.get("prompt_scenario"),
+          guardrail_triggered=res.get("guardrail_triggered", False), guardrail_name=res.get("guardrail_name"),
+          guardrail_action=res.get("guardrail_action"))
+    return {"product": product, "reason": res["reason"], "provider": res["provider"], "model": res["model"],
+            "fallback": res["fallback"], "prompt_scenario": res.get("prompt_scenario"),
+            "safety": {"issue": res.get("ai_quality_issue"),
+            "guardrail": res.get("guardrail_name"), "action": res.get("guardrail_action")}}

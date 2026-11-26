@@ -11,6 +11,7 @@ browser ──POST /api/catalog/match──▶ storefront ──▶ catalog (Pyt
 ```
 
 - `services/catalog/matcher.py` sends the shopper's text (capped at 300 characters) plus the 75-car catalog as a compact list, and asks for JSON `{"sku", "reason"}`.
+- Six prompt scenarios create varied recommendation traffic: personality, gift, occasion, collection gap, adventure, and nostalgia. The selected scenario is logged as `prompt_scenario`; prompt text is not logged.
 - The answer is only accepted if the SKU exists in the catalog. Anything else (bad JSON, an invented SKU, "ignore your instructions" text, throttling, timeouts, missing permissions) falls back to the local keyword matcher. The shopper always gets a car.
 - The shopper's text is never logged; the `ai match` log line records provider, model, latency, token counts, fallback reason and the chosen SKU.
 
@@ -19,6 +20,7 @@ browser ──POST /api/catalog/match──▶ storefront ──▶ catalog (Pyt
 | `ai.matcher.provider` | `keyword` | `keyword` runs anywhere with no cloud; `bedrock` calls the model |
 | `ai.matcher.modelId` | `us.anthropic.claude-haiku-5-5` | Bedrock model or inference-profile ID |
 | `ai.matcher.region` | `us-east-1` | Bedrock region |
+| `ai.matcher.syntheticTrafficPercent` | `20` | Percent of web load-generator sessions that submit one of twelve varied AI prompts; use `0` to disable synthetic LLM traffic |
 | `ai.serviceAccount.name` | `tinycars-catalog` | Service account the catalog pod runs as |
 | `ai.serviceAccount.annotations` | `{}` | Only for IRSA: `eks.amazonaws.com/role-arn: ...` |
 
@@ -87,9 +89,13 @@ Switching back is `--set ai.matcher.provider=keyword`.
 ## What it adds to observability
 
 - **Traces:** the OTel Operator's Python agent instruments botocore, so the Bedrock call appears as a client span inside the `/match` request (browser click → storefront → catalog → Bedrock). Newer instrumentation versions add GenAI attributes (`gen_ai.*`, model and token usage); check which ones arrive in your backend.
-- **Logs:** one `event_type=ai.match` line per request with `provider`, `model`, `fallback`, `error`, `latency_ms`, `input_tokens`, `output_tokens`, `sku`. Fallbacks are logged at WARNING.
+- **Logs:** one `event_type=ai.match` line per request with `provider`, `model`, `prompt_scenario`, `fallback`, `error`, `latency_ms`, `input_tokens`, `output_tokens`, `sku`. Fallbacks are logged at WARNING.
 - **Problem pattern `ai_matcher_slowdown`** (admin panel, group "AI"): adds 0.8 s × level of model latency; from level 3 calls are throttled and the keyword fallback answers. Good for showing a dependency slowdown and graceful degradation side by side.
+- **Problem pattern `ai_hallucination`** simulates poisoned retrieval context by adding a phantom `TC-999` product to the model prompt. The authoritative application SKU allowlist blocks the unknown result and logs a hallucination quality issue before returning a safe local match.
+- **Problem pattern `ai_prompt_guardrail`** appends a synthetic prompt attack and applies the configured Amazon Bedrock Guardrail. A provider intervention is logged with `finish_reason=guardrail_intervened` and the shopper receives a safe local match.
+
+`deploy-eks.sh` creates or reuses the `tinycars-ai-safety` guardrail, grants the catalog pod role permission to apply only that guardrail, and passes its ID to the Helm release. These controlled patterns do not require prompt-content capture in Dynatrace.
 
 ## Cost
 
-One match is roughly 1,000 input tokens (the catalog list) and about 40 output tokens. On Haiku that is a fraction of a cent per match; the loadgen does not call the matcher, so cost only comes from people using the button.
+One match is roughly 1,000 input tokens (the catalog list) and about 40 output tokens. The load generator submits a varied match request for `ai.matcher.syntheticTrafficPercent` percent of web sessions. Set that value to `0` when you want synthetic AI cost and traffic completely disabled.

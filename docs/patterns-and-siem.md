@@ -4,6 +4,8 @@ Flip these in the hidden admin panel (click the wrench in the TinyCars logo, or 
 
 State lives in Redis (`tc:flags`), so a toggle applies within about 2-3 seconds, with no restarts.
 
+The **Random problems — 24 hours** button builds a randomized schedule that runs every pattern once during the next day. Each activation gets a random level, store where applicable, and a 15-45 minute duration. The schedule is stored in Redis (`tc:random-day`), survives a storefront restart, and automatically turns all patterns off when stopped or completed. Only one storefront replica executes each due event because processing uses a short Redis lease.
+
 ## App and Postgres patterns
 
 | Pattern | Service | What you will see | Detection idea |
@@ -22,6 +24,10 @@ Tip: raise the load first (admin panel, "Black Friday" preset) so pool and CPU p
 | Pattern | Service | What breaks | What you should see |
 |---|---|---|---|
 | `ai_matcher_slowdown` | catalog | "Find my car" model calls get 0.8 s x level slower; from level 3 they are throttled and the keyword matcher answers instead | `/match` latency rises; `ai match` log lines switch to `fallback: true` with a throttling `error`; the Bedrock span disappears from traces while requests still succeed (graceful degradation) |
+| `ai_hallucination` | catalog | Controlled poisoned context adds a phantom `TC-999` product to the model's catalog | The authoritative catalog allowlist blocks the unknown SKU, returns a safe keyword match, and logs `ai_quality_issue=hallucination`, `guardrail_name=catalog_sku_allowlist`, and `guardrail_action=block` |
+| `ai_prompt_guardrail` | catalog | A synthetic prompt-injection attempt is appended to the shopper request | Amazon Bedrock Guardrails intervenes, TinyCars returns a safe keyword match, and logs `ai_quality_issue=prompt_injection`, `finish_reason=guardrail_intervened`, and `guardrail_name=amazon_bedrock` |
+
+These are application problem patterns and become Dynatrace problems only after an alert detector is configured. Use one record-based detector over the catalog logs, grouped by `ai_quality_issue`, with a static condition such as two or more blocked/failed outcomes in five minutes. Assign a common `dt.alert_group` such as `tinycars-ai-quality` so Davis can correlate the resulting events into a problem.
 
 ## Store VM / SIEM-style patterns (synthetic log lines only)
 

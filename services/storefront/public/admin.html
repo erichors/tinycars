@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TinyCars - garage control room</title>
+  <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
+  <link rel="shortcut icon" href="/favicon.svg?v=2">
   <meta name="robots" content="noindex">
   <style>
     :root{--bg:#0e1117;--panel:#161b24;--line:#283042;--txt:#d7dde8;--dim:#8a94a7;--acc:#f6c945;--ok:#3ddc84;--bad:#ff5d5d;--warn:#ffb020}
@@ -54,6 +56,8 @@
           <span id="lState" class="badge"></span></div>
       </section>
       <section><h2>Problem patterns</h2><div id="patterns"></div>
+        <div class="row" style="margin-top:12px"><button class="primary" id="randomDay">Random problems — 24 hours</button>
+          <button id="randomStop">Stop random schedule</button><span id="randomState" class="badge"></span></div>
         <div class="row" style="margin-top:12px"><button class="danger" id="reset">All patterns off</button>
           <span class="badge">level 1-5 scales delay / error rate / burst size</span></div></section>
       <section><h2>Recent events</h2><div id="events"></div></section>

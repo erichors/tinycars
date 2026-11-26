@@ -431,16 +431,33 @@ async function account() {
 }
 
 // ------------------------------------------------------------------ "Find my car" (AI matcher)
-const MATCH_IDEAS = ['Outdoorsy, a bit loud, and I love the 70s', 'Calm, classic, Sunday-drive person', 'Competitive and always early',
-  'I build things and get my hands dirty', 'Quirky, artsy, a little bit silly', 'I help people and stay cool under pressure'];
+const MATCH_SCENARIOS = {
+  personality: 'Match my personality', gift: 'Choose a gift', occasion: 'Special occasion',
+  collection: 'Complete my collection', adventure: 'Plan an adventure', nostalgia: 'Match an era or memory',
+};
+const MATCH_IDEAS = [
+  { scenario: 'personality', text: 'Outdoorsy, a bit loud, and I love the 70s' },
+  { scenario: 'personality', text: 'Calm, classic, and happiest on a Sunday drive' },
+  { scenario: 'gift', text: 'A gift for a competitive ten-year-old who loves speed and bright colors' },
+  { scenario: 'gift', text: 'A funny retirement gift for a firefighter who collects unusual vehicles' },
+  { scenario: 'occasion', text: 'A glamorous car for a milestone birthday display' },
+  { scenario: 'occasion', text: 'Something playful for a beach-themed summer party' },
+  { scenario: 'collection', text: 'My garage has racers and muscle cars but no hardworking utility vehicle' },
+  { scenario: 'collection', text: 'I collect 1960s classics and want one quirky centerpiece' },
+  { scenario: 'adventure', text: 'A muddy mountain camping trip with rough trails and no paved roads' },
+  { scenario: 'adventure', text: 'A relaxed cross-country road trip with room for the whole family' },
+  { scenario: 'nostalgia', text: 'Take me back to chrome, diners, whitewalls, and the 1950s' },
+  { scenario: 'nostalgia', text: 'I miss colorful 1970s music festivals and carefree road trips' },
+];
 function openMatcher() {
   const root = $('#modalRoot');
   root.innerHTML = `<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="fmTitle">
     <div class="sheet wide"><button class="x" id="mClose" aria-label="Close">&times;</button>
       <h2 id="fmTitle">Find my car</h2><p class="sub">Tell us a little about yourself and we'll pick the TinyCar that fits you.</p>
       <form id="matchForm" class="form">
+        <label>Recommendation style<select name="scenario" id="matchScenario">${Object.entries(MATCH_SCENARIOS).map(([value, label]) => `<option value="${value}">${esc(label)}</option>`).join('')}</select></label>
         <textarea name="text" id="matchText" maxlength="300" rows="3" required placeholder="e.g. I'm outdoorsy, a bit loud, and I love the 70s"></textarea>
-        <div class="ideas">${MATCH_IDEAS.map((i) => `<button type="button" data-t="${esc(i)}">${esc(i)}</button>`).join('')}</div>
+        <div class="ideas">${MATCH_IDEAS.map((i) => `<button type="button" data-s="${i.scenario}" data-t="${esc(i.text)}">${esc(i.text)}</button>`).join('')}</div>
         <button class="btn block" type="submit" id="matchGo">Match me</button>
       </form>
       <div id="matchOut"></div>
@@ -448,19 +465,21 @@ function openMatcher() {
   const close = () => { root.innerHTML = ''; };
   $('#mClose').onclick = close;
   $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') close(); });
-  $$('.ideas button', root).forEach((b) => b.addEventListener('click', () => { $('#matchText').value = b.dataset.t; $('#matchText').focus(); }));
+  $$('.ideas button', root).forEach((b) => b.addEventListener('click', () => {
+    $('#matchScenario').value = b.dataset.s; $('#matchText').value = b.dataset.t; $('#matchText').focus();
+  }));
   $('#matchForm').onsubmit = async (e) => {
     e.preventDefault();
     const out = $('#matchOut'); const go = $('#matchGo');
     go.disabled = true; go.textContent = 'Finding your car…';
     out.innerHTML = '<div class="matching"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
     try {
-      const r = await api('/catalog/match', { method: 'POST', body: { text: $('#matchText').value } });
+      const r = await api('/catalog/match', { method: 'POST', body: { text: $('#matchText').value, scenario: $('#matchScenario').value } });
       const p = r.product;
       out.innerHTML = `<div class="matchcard"><a href="#/p/${esc(p.sku)}" class="mimg"><img src="${esc(p.image)}" alt="${esc(p.name)}"></a>
         <div><small>Your TinyCar is</small><h3>${esc(p.name)}</h3><p>${esc(r.reason)}</p><div class="mprice">${price(p)}</div>
         <div class="mbtns"><button class="btn add" data-sku="${esc(p.sku)}">Add to cart</button><a class="btn ghost" href="#/p/${esc(p.sku)}" id="matchView">View details</a></div>
-        <div class="by">${r.provider === 'bedrock' ? `Matched by Claude on Amazon Bedrock (${esc(r.model)})` : r.fallback ? 'Matched by our quick matcher (the AI matchmaker is busy right now)' : 'Matched by our quick matcher'}</div></div></div>`;
+        <div class="by">${r.safety && r.safety.action === 'block' ? `Protected by ${esc(r.safety.guardrail)}; a safe local match was used` : r.provider === 'bedrock' ? `Matched by Claude on Amazon Bedrock (${esc(r.model)})` : r.fallback ? 'Matched by our quick matcher (the AI matchmaker is busy right now)' : 'Matched by our quick matcher'}</div></div></div>`;
       $('#matchView').onclick = close;
     } catch (err) {
       out.innerHTML = `<div class="msg bad">${esc(err.message)}</div>`;

@@ -19,6 +19,17 @@ function render(s) {
   $('#rpmV').textContent = $('#rpm').value; $('#webV').textContent = $('#web').value;
   $('#lState').textContent = s.load.running ? 'RUNNING' : 'STOPPED';
   $('#lState').style.color = s.load.running ? 'var(--ok)' : 'var(--warn)';
+  const day = s.randomDay || { running: false, completed: 0, total: 0 };
+  $('#randomDay').disabled = day.running;
+  $('#randomStop').disabled = !day.running;
+  if (day.running) {
+    const next = day.next ? `${day.next.action} ${day.next.pattern} at ${new Date(day.next.at).toLocaleTimeString()}` : 'finishing';
+    $('#randomState').textContent = `RUNNING ${day.completed}/${day.total} · next: ${next}`;
+    $('#randomState').style.color = 'var(--warn)';
+  } else {
+    $('#randomState').textContent = day.total ? `STOPPED ${day.completed}/${day.total}` : 'NOT SCHEDULED';
+    $('#randomState').style.color = 'var(--dim)';
+  }
 
   if (!document.activeElement || !document.activeElement.closest('#patterns')) {
     let html = '', group = '';
@@ -54,6 +65,8 @@ document.addEventListener('click', async (e) => {
   if (e.target.id === 'lStart') { await call('/load', 'PUT', { running: true }); refresh(); }
   if (e.target.id === 'lStop') { await call('/load', 'PUT', { running: false }); refresh(); }
   if (e.target.dataset && e.target.dataset.rpm) { await call('/load', 'PUT', { running: true, rpm: Number(e.target.dataset.rpm) }); refresh(); }
+  if (e.target.id === 'randomDay') { await call('/random-day/start', 'POST'); refresh(); }
+  if (e.target.id === 'randomStop') { await call('/random-day/stop', 'POST'); refresh(); }
   if (e.target.id === 'reset') { await call('/reset', 'POST'); refresh(); }
 });
 document.addEventListener('change', (e) => {

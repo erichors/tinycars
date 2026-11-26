@@ -1,6 +1,6 @@
 'use strict';
 // TinyCars storefront (Node.js / Express, CommonJS).
-// Plain app code: no OpenTelemetry imports. Tracing comes from the OTel Operator (inject-nodejs).
+// Plain app code: no telemetry imports. Tracing comes from OneAgent injection.
 // Serves the UI, proxies /api/* to backend services, and hosts the hidden admin API.
 // Problem-pattern + load state lives in Redis (tc:flags, tc:load).
 const crypto = require('crypto');
@@ -17,6 +17,9 @@ const URLS = {
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379/0';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'tinycars';
 const STORES = ['boston', 'chicago', 'london'];
+const RANDOM_DAY_KEY = 'tc:random-day';
+const RANDOM_DAY_LOCK_KEY = 'tc:random-day:lock';
+const RANDOM_DAY_MS = 24 * 60 * 60 * 1000;
 
 // Source of truth for the admin panel and for what services/agents react to.
 const PATTERNS = [
@@ -27,6 +30,8 @@ const PATTERNS = [
   { name: 'inventory_pool_exhaustion', group: 'Postgres', service: 'inventory', label: 'Connection pool exhaustion', description: 'inventory holds DB connections too long; the pool fills and new requests queue then fail.' },
   { name: 'inventory_slow_query', group: 'Postgres', service: 'inventory', label: 'Slow / long-running query', description: 'inventory runs a sequential-scan query with an artificial sleep against Postgres.' },
   { name: 'ai_matcher_slowdown', group: 'AI', service: 'catalog', label: 'AI matcher slowdown / throttling', description: '"Find my car" model calls slow down (0.8 s x level); from level 3 they are throttled and the keyword fallback answers.' },
+  { name: 'ai_hallucination', group: 'AI', service: 'catalog', label: 'AI hallucinated product', description: 'Poisons the model context with a phantom TC-999 product. The authoritative catalog allowlist blocks it and serves a safe fallback.' },
+  { name: 'ai_prompt_guardrail', group: 'AI', service: 'catalog', label: 'AI prompt-attack guardrail', description: 'Adds a synthetic prompt-injection attempt. Amazon Bedrock Guardrails blocks it and TinyCars serves a safe fallback.' },
   { name: 'store_failed_login_flood', group: 'Store VM / SIEM', service: 'store-agent', store: true, label: 'Failed-login flood', description: 'Chosen store emits a burst of failed SSH login log lines (synthetic).' },
   { name: 'store_file_integrity_alert', group: 'Store VM / SIEM', service: 'store-agent', store: true, label: 'File-integrity alert', description: 'Chosen store emits synthetic audit events for edits to watched config files.' },
   { name: 'impossible_travel', group: 'Store VM / SIEM', service: 'store-agent', label: 'Impossible travel', description: 'Same account buys in a US store, then orders from London minutes later.' },
@@ -161,11 +166,101 @@ async function readLoad() {
 }
 async function pushEvent(evt) {
   const e = { ts: new Date().toISOString(), ...evt };
-  log('INFO', evt.event, { ...evt });
+  const logFields = { ...evt };
+  // Preserve the logging severity field; pattern intensity has its own semantic name.
+  if (logFields.level !== undefined) {
+    logFields.pattern_level = logFields.level;
+    delete logFields.level;
+  }
+  log('INFO', evt.event, logFields);
   try {
     await redis.lPush('tc:events', JSON.stringify(e));
     await redis.lTrim('tc:events', 0, 49);
   } catch (err) { /* non-fatal */ }
+}
+
+async function setPatternFlag(name, on, level = 2, store, source = 'manual') {
+  const def = PATTERNS.find((p) => p.name === name);
+  if (!def) throw new Error(`unknown pattern ${name}`);
+  const safeLevel = Math.max(1, Math.min(5, Number(level) || 2));
+  const value = { on: !!on, level: safeLevel, updated: new Date().toISOString() };
+  if (def.store) value.store = STORES.includes(store) ? store : 'boston';
+  await redis.hSet('tc:flags', name, JSON.stringify(value));
+  flags[name] = value;
+  await pushEvent({ event: on ? 'PATTERN_ENABLED' : 'PATTERN_DISABLED', pattern: name,
+    level: safeLevel, store: value.store || null, source });
+  return { name, ...value };
+}
+
+function shuffled(items) {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = crypto.randomInt(0, i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function createRandomDay() {
+  const started = Date.now();
+  const ends = started + RANDOM_DAY_MS;
+  const ordered = shuffled(PATTERNS);
+  const slot = RANDOM_DAY_MS / ordered.length;
+  const events = [];
+  ordered.forEach((pattern, index) => {
+    // Start promptly, then distribute every pattern across its own randomized time slot.
+    const at = index === 0 ? started + 3000 : started + Math.floor(index * slot + crypto.randomInt(0, Math.max(2, Math.floor(slot * 0.45))));
+    const duration = crypto.randomInt(15, 46) * 60 * 1000;
+    const offAt = Math.min(at + duration, ends - 1000);
+    const level = crypto.randomInt(1, 6);
+    const store = pattern.store ? STORES[crypto.randomInt(0, STORES.length)] : null;
+    events.push({ at, action: 'enable', pattern: pattern.name, level, store });
+    events.push({ at: offAt, action: 'disable', pattern: pattern.name, level, store });
+  });
+  events.sort((a, b) => a.at - b.at || a.action.localeCompare(b.action));
+  return { id: crypto.randomUUID(), running: true, startedAt: new Date(started).toISOString(),
+    endsAt: new Date(ends).toISOString(), cursor: 0, events };
+}
+
+async function readRandomDay() {
+  const raw = await redis.get(RANDOM_DAY_KEY);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch (e) { return null; }
+}
+
+function randomDayStatus(day) {
+  if (!day) return { running: false, completed: 0, total: 0, next: null };
+  const next = day.running && day.events[day.cursor] ? day.events[day.cursor] : null;
+  return { id: day.id, running: !!day.running, startedAt: day.startedAt, endsAt: day.endsAt,
+    stoppedAt: day.stoppedAt || null, completed: day.cursor || 0, total: day.events.length,
+    next: next ? { ...next, at: new Date(next.at).toISOString() } : null };
+}
+
+async function processRandomDay() {
+  const owner = crypto.randomUUID();
+  if (!(await redis.set(RANDOM_DAY_LOCK_KEY, owner, { NX: true, PX: 15000 }))) return;
+  try {
+    const day = await readRandomDay();
+    if (!day || !day.running) return;
+    const now = Date.now();
+    while (day.cursor < day.events.length && day.events[day.cursor].at <= now) {
+      const evt = day.events[day.cursor];
+      await setPatternFlag(evt.pattern, evt.action === 'enable', evt.level, evt.store, 'random_day');
+      day.cursor += 1;
+    }
+    if (now >= Date.parse(day.endsAt) || day.cursor >= day.events.length) {
+      day.running = false;
+      day.stoppedAt = new Date().toISOString();
+      await redis.del('tc:flags');
+      flags = {};
+      await pushEvent({ event: 'RANDOM_DAY_COMPLETED', schedule_id: day.id });
+    }
+    await redis.set(RANDOM_DAY_KEY, JSON.stringify(day));
+  } finally {
+    // Only release our own lease; a slow worker must not delete a successor's lock.
+    await redis.eval('if redis.call("get", KEYS[1]) == ARGV[1] then return redis.call("del", KEYS[1]) else return 0 end',
+      { keys: [RANDOM_DAY_LOCK_KEY], arguments: [owner] });
+  }
 }
 async function ping(base) {
   try { return (await fetch(base + '/healthz', { signal: AbortSignal.timeout(1000) })).ok; } catch (e) { return false; }
@@ -180,21 +275,38 @@ app.get('/api/admin/state', auth, async (req, res) => {
   await refreshFlags();
   const events = (await redis.lRange('tc:events', 0, 19)).map((s) => JSON.parse(s));
   const [catalog, cart, inventory] = await Promise.all([ping(URLS.catalog), ping(URLS.cart), ping(URLS.inventory)]);
-  res.json({ patterns: PATTERNS, flags, load: await readLoad(), events, health: { catalog, 'cart-checkout': cart, inventory, storefront: true }, stores: STORES });
+  res.json({ patterns: PATTERNS, flags, load: await readLoad(), randomDay: randomDayStatus(await readRandomDay()),
+    events, health: { catalog, 'cart-checkout': cart, inventory, storefront: true }, stores: STORES });
 });
 
 app.put('/api/admin/flags/:name', auth, async (req, res) => {
   const name = req.params.name;
   if (!PATTERN_NAMES.has(name)) return res.status(404).json({ error: 'unknown pattern' });
-  const def = PATTERNS.find((p) => p.name === name);
   const on = !!req.body.on;
   const level = Math.max(1, Math.min(5, Number(req.body.level || 2)));
-  const value = { on, level, updated: new Date().toISOString() };
-  if (def.store) value.store = STORES.includes(req.body.store) ? req.body.store : 'boston';
-  await redis.hSet('tc:flags', name, JSON.stringify(value));
-  flags[name] = value;
-  await pushEvent({ event: on ? 'PATTERN_ENABLED' : 'PATTERN_DISABLED', pattern: name, level, store: value.store || null });
-  res.json({ name, ...value });
+  res.json(await setPatternFlag(name, on, level, req.body.store));
+});
+
+app.post('/api/admin/random-day/start', auth, async (req, res) => {
+  const day = createRandomDay();
+  await redis.del('tc:flags');
+  flags = {};
+  await redis.set(RANDOM_DAY_KEY, JSON.stringify(day));
+  await pushEvent({ event: 'RANDOM_DAY_STARTED', schedule_id: day.id, ends_at: day.endsAt, patterns: PATTERNS.length });
+  res.json(randomDayStatus(day));
+});
+
+app.post('/api/admin/random-day/stop', auth, async (req, res) => {
+  const day = await readRandomDay();
+  if (day) {
+    day.running = false;
+    day.stoppedAt = new Date().toISOString();
+    await redis.set(RANDOM_DAY_KEY, JSON.stringify(day));
+  }
+  await redis.del('tc:flags');
+  flags = {};
+  await pushEvent({ event: 'RANDOM_DAY_STOPPED', schedule_id: day ? day.id : null });
+  res.json(randomDayStatus(day));
 });
 
 app.put('/api/admin/load', auth, async (req, res) => {
@@ -210,6 +322,12 @@ app.put('/api/admin/load', auth, async (req, res) => {
 });
 
 app.post('/api/admin/reset', auth, async (req, res) => {
+  const day = await readRandomDay();
+  if (day && day.running) {
+    day.running = false;
+    day.stoppedAt = new Date().toISOString();
+    await redis.set(RANDOM_DAY_KEY, JSON.stringify(day));
+  }
   await redis.del('tc:flags');
   flags = {};
   await pushEvent({ event: 'PATTERNS_RESET' });
@@ -228,4 +346,6 @@ app.use(express.static(path.join(__dirname, 'public')));
   await redis.hSetNX('tc:load', 'web_pct', '70');
   await refreshFlags();
   setInterval(refreshFlags, 2000);
+  await processRandomDay();
+  setInterval(() => processRandomDay().catch((e) => log('WARN', 'random-day scheduler failed', { error: String(e.message || e) })), 10000);
 })();

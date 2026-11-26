@@ -22,6 +22,8 @@ DYNAKUBE="${DYNAKUBE:-eks-bottlerocket-k8s-2025-10-27}"
 ADMIN_TOKEN="${ADMIN_TOKEN:-$(openssl rand -hex 18)}"
 POLICY_NAME="${POLICY_NAME:-TinyCarsBedrockInvoke}"
 ROLE_NAME="${ROLE_NAME:-tinycars-catalog-bedrock}"
+GUARDRAIL_NAME="tinycars-ai-safety"
+GUARDRAIL_VERSION="${GUARDRAIL_VERSION:-DRAFT}"
 
 export AWS_PROFILE AWS_REGION
 
@@ -43,6 +45,14 @@ ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
 REGISTRY="${ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/"
 POLICY_ARN="arn:aws:iam::${ACCOUNT}:policy/${POLICY_NAME}"
 ROLE_ARN="arn:aws:iam::${ACCOUNT}:role/${ROLE_NAME}"
+
+echo ">> Configuring Amazon Bedrock Guardrails"
+GUARDRAIL_ID="${AI_GUARDRAIL_ID:-$(aws bedrock list-guardrails --region "$AWS_REGION" \
+  --query "guardrails[?name=='${GUARDRAIL_NAME}'].id | [0]" --output text)}"
+if [[ -z "$GUARDRAIL_ID" || "$GUARDRAIL_ID" == "None" ]]; then
+  GUARDRAIL_ID="$(aws bedrock create-guardrail --region "$AWS_REGION" \
+    --cli-input-json "file://${ROOT_DIR}/deploy/bedrock-guardrail.json" --query guardrailId --output text)"
+fi
 
 echo ">> Selecting EKS cluster ${CLUSTER}"
 aws eks update-kubeconfig --name "$CLUSTER" --region "$AWS_REGION" >/dev/null
@@ -87,7 +97,7 @@ fi
 docker buildx inspect "$BUILDX_BUILDER" --bootstrap >/dev/null
 
 echo ">> Creating ECR repositories when missing"
-for service_name in storefront catalog cart-checkout inventory loadgen; do
+for service_name in storefront catalog cart-checkout inventory loadgen network-sim; do
   aws ecr describe-repositories --repository-names "tinycars-${service_name}" >/dev/null 2>&1 || \
     aws ecr create-repository --repository-name "tinycars-${service_name}" >/dev/null
 done
@@ -110,6 +120,9 @@ if ! aws iam get-role --role-name "$ROLE_NAME" >/dev/null 2>&1; then
   aws iam create-role --role-name "$ROLE_NAME" --assume-role-policy-document "$TRUST_DOCUMENT" >/dev/null
 fi
 aws iam attach-role-policy --role-name "$ROLE_NAME" --policy-arn "$POLICY_ARN"
+GUARDRAIL_POLICY_DOCUMENT="$(printf '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["bedrock:ApplyGuardrail"],"Resource":"arn:aws:bedrock:%s:%s:guardrail/%s"}]}' "$AWS_REGION" "$ACCOUNT" "$GUARDRAIL_ID")"
+aws iam put-role-policy --role-name "$ROLE_NAME" --policy-name TinyCarsBedrockGuardrail \
+  --policy-document "$GUARDRAIL_POLICY_DOCUMENT"
 
 if ! aws eks describe-addon --cluster-name "$CLUSTER" --addon-name eks-pod-identity-agent >/dev/null 2>&1; then
   aws eks create-addon --cluster-name "$CLUSTER" --addon-name eks-pod-identity-agent >/dev/null
@@ -146,8 +159,11 @@ helm upgrade --install tinycars "$ROOT_DIR/deploy/helm/tinycars" \
   --set "otel.instrumentation.create=${INSTRUMENTATION_CREATE}" \
   --set "otel.instrumentation.enabled=${INSTRUMENTATION_ENABLED}" \
   --set ai.matcher.provider=bedrock \
+  --set-string "ai.matcher.guardrailId=${GUARDRAIL_ID}" \
+  --set-string "ai.matcher.guardrailVersion=${GUARDRAIL_VERSION}" \
   --set postgres.persistence.enabled=false \
   --set services.storefront.serviceType=ClusterIP \
+  --set networkSimulator.enabled=true \
   --set-string "adminToken=${ADMIN_TOKEN}" \
   --wait --timeout 10m
 

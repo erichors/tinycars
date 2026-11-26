@@ -21,6 +21,10 @@ Tested end to end in a sandbox with real Postgres and Redis: catalog, storefront
 
 The Java, .NET, Python and Node images, Helm chart, Bedrock matcher and EKS deployment have been tested end to end on the `dynatrace-easytrade` cluster.
 
+An optional [SNMP network lab](docs/network-simulator.md) adds mock routers,
+switches, and wireless access points for Boston, Chicago, and London. The EKS
+deployment script enables it with private UDP/161 services.
+
 For that existing cluster, the full build, ECR push, least-privilege Bedrock Pod Identity setup, Dynatrace namespace setup and Helm deployment are one command:
 
 ```bash

@@ -34,6 +34,9 @@ ai:
     provider: keyword                       # keyword | bedrock
     modelId: us.anthropic.claude-haiku-5-5  # Bedrock model or inference-profile ID
     region: us-east-1
+    guardrailId: ""                         # optional Amazon Bedrock Guardrail ID
+    guardrailVersion: DRAFT                 # DRAFT or a published numeric version
+    syntheticTrafficPercent: 20             # percent of web loadgen sessions that call the matcher (0-100)
   # The catalog pod runs as this service account. For Bedrock, give it bedrock:InvokeModel via
   # EKS Pod Identity (no annotation needed) or IRSA (set the role ARN annotation). See docs/ai-matcher.md.
   serviceAccount:
@@ -52,6 +55,21 @@ postgres:
 
 redis:
   image: redis:7-alpine
+
+# Private SNMP lab polled by the Dynatrace ActiveGate. It creates router,
+# switch, and wireless AP devices for Boston, Chicago, and London.
+networkSimulator:
+  enabled: false
+  image: tinycars-network-sim
+  tag: ""                  # empty = image.tag
+  community: tinycars
+  basePort: 1161
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
 
 # One entry per service. Adding a module = add an entry (see README "Add a new service").
 services:

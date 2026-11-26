@@ -27,6 +27,21 @@ FIRST = ["alex", "sam", "jordan", "casey", "riley", "morgan", "taylor", "jamie",
 DEMO_USERS = ["alex.rivera", "priya.patel", "sam.okafor", "jordan.kim", "casey.nguyen", "morgan.rossi",
               "taylor.brooks", "riley.chen", "jamie.walker", "avery.lopez", "drew.murphy", "harper.singh"]
 SIGN_IN_PCT = float(os.getenv("SIGN_IN_PCT", "30"))
+AI_MATCH_PCT = float(os.getenv("AI_MATCH_PCT", "3"))
+AI_PROMPTS = [
+    ("personality", "Outdoorsy, adventurous, and happiest on a muddy trail"),
+    ("personality", "Quiet, practical, and always prepared to help"),
+    ("gift", "A gift for a competitive kid who loves speed and bright colors"),
+    ("gift", "A retirement gift for a firefighter who collects unusual vehicles"),
+    ("occasion", "A glamorous centerpiece for a milestone birthday"),
+    ("occasion", "A playful car for a beach-themed summer party"),
+    ("collection", "My collection has racers but needs a hardworking utility vehicle"),
+    ("collection", "I collect classics and need one quirky centerpiece"),
+    ("adventure", "A rough mountain camping trip with mud and no paved roads"),
+    ("adventure", "A relaxed family road trip across the country"),
+    ("nostalgia", "Chrome, diners, whitewalls, and memories of the 1950s"),
+    ("nostalgia", "Colorful 1970s music festivals and carefree road trips"),
+]
 stats = Counter()
 
 
@@ -64,6 +79,10 @@ async def session(client: httpx.AsyncClient, web: bool):
                 if random.random() < 0.3:
                     await client.get("/api/account/orders", headers=headers)
         cats = (await client.get("/api/catalog/categories")).json()
+        if web and random.random() * 100 < AI_MATCH_PCT:
+            scenario, prompt = random.choice(AI_PROMPTS)
+            ai = await client.post("/api/catalog/match", json={"scenario": scenario, "text": prompt})
+            stats[f"ai_{scenario}_{ai.status_code}"] += 1
         cat = random.choice(cats)["name"]
         prods = (await client.get("/api/catalog/products", params={"category": cat})).json()
         if random.random() < 0.25:

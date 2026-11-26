@@ -1,0 +1,37 @@
+{
+  "name": "tinycars-ai-safety",
+  "description": "Demo safety guardrail for TinyCars prompt-injection and harmful-content patterns",
+  "contentPolicyConfig": {
+    "filtersConfig": [
+      {
+        "type": "PROMPT_ATTACK",
+        "inputStrength": "HIGH",
+        "outputStrength": "NONE",
+        "inputModalities": ["TEXT"],
+        "outputModalities": ["TEXT"],
+        "inputAction": "BLOCK",
+        "outputAction": "NONE",
+        "inputEnabled": true,
+        "outputEnabled": false
+      },
+      {
+        "type": "MISCONDUCT",
+        "inputStrength": "MEDIUM",
+        "outputStrength": "MEDIUM",
+        "inputModalities": ["TEXT"],
+        "outputModalities": ["TEXT"],
+        "inputAction": "BLOCK",
+        "outputAction": "BLOCK",
+        "inputEnabled": true,
+        "outputEnabled": true
+      }
+    ],
+    "tierConfig": {"tierName": "CLASSIC"}
+  },
+  "blockedInputMessaging": "TinyCars blocked a synthetic unsafe or prompt-injection request.",
+  "blockedOutputsMessaging": "TinyCars blocked an unsafe model response.",
+  "tags": [
+    {"key": "application", "value": "tinycars"},
+    {"key": "purpose", "value": "observability-demo"}
+  ]
+}
