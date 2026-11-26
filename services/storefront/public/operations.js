@@ -3,6 +3,7 @@
 const $ = (selector) => document.querySelector(selector);
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const locations = ['warehouse', 'boston', 'chicago', 'london'];
+const siteTimezones = { warehouse: 'UTC', boston: 'America/New_York', chicago: 'America/Chicago', london: 'Europe/London' };
 const state = { token: sessionStorage.getItem('tc_admin') || '', summary: {}, products: [], stock: [], movements: [], purchaseOrders: [], orders: [], orderResults: null, returnOrder: null, shipments: [], returns: [] };
 const titles = {
   overview: ['Good morning, garage.', 'Keep orders moving and shelves stocked.'],
@@ -45,7 +46,25 @@ async function api(path, method = 'GET', body) {
   return data;
 }
 
-function date(value) { return value ? new Date(value).toLocaleString() : '—'; }
+function date(value, location) {
+  return value ? new Intl.DateTimeFormat('en-US', {
+    timeZone: siteTimezones[location] || 'UTC', month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+  }).format(new Date(value)) : '—';
+}
+
+function renderStoreClocks() {
+  const now = new Date();
+  $('#store-clocks').innerHTML = locations.filter((location) => location !== 'warehouse').map((location) => {
+    const timeZone = siteTimezones[location];
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone, hour: 'numeric', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'short' }).formatToParts(now);
+    const part = (type) => parts.find((item) => item.type === type)?.value || '';
+    const hour = Number(part('hour'));
+    const isOpen = hour >= 10 && hour < 20;
+    const name = location[0].toUpperCase() + location.slice(1);
+    return `<div class="store-clock"><span class="store-clock-name">${name}</span><strong>${part('hour')}:${part('minute')} <small>${part('timeZoneName')}</small></strong><span class="store-clock-status ${isOpen ? 'open' : ''}">${isOpen ? 'Open · 10:00–20:00' : 'After hours · 10:00–20:00'}</span></div>`;
+  }).join('');
+}
 function money(value, currency = 'USD') { return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(Number(value || 0)); }
 function badge(value) { return `<span class="badge ${escapeHtml(value || '')}">${escapeHtml(value || 'unshipped')}</span>`; }
 function empty(message) { return `<div class="empty">${escapeHtml(message)}</div>`; }
@@ -87,15 +106,15 @@ function renderOverview() {
   ];
   $('#kpis').innerHTML = tiles.map(([label, value, warn]) => `<div class="kpi ${warn && value ? 'warn' : ''}"><span>${escapeHtml(label)}</span><b class="${Array.isArray(value) ? 'multi' : ''}">${Array.isArray(value) ? value.map(escapeHtml).join('<br>') : escapeHtml(value ?? 0)}</b></div>`).join('');
   $('#overview-stock').innerHTML = state.stock.filter((r) => r.qty < 8).slice(0, 7).map((r) => `<div class="small-row"><span><b>${escapeHtml(r.name)}</b><br><small>${escapeHtml(r.sku)} · ${escapeHtml(r.location)}</small></span><span class="qty low">${r.qty}</span></div>`).join('') || empty('No low stock right now.');
-  $('#overview-orders').innerHTML = state.orders.slice(0, 7).map((o) => `<div class="small-row"><span><b>${escapeHtml(o.order_id)}</b><br><small>${escapeHtml(o.customer_email)} · ${escapeHtml(o.location)}</small></span><span>${money(o.total, o.currency)}</span></div>`).join('') || empty('No orders yet.');
-  $('#overview-movements').innerHTML = state.movements.slice(0, 10).map((m) => `<div class="small-row"><span><b>${escapeHtml(m.sku)}</b> · ${escapeHtml(m.kind)}<br><small>${escapeHtml(m.location)} · ${escapeHtml(m.reference)}</small></span><span class="${m.delta < 0 ? 'muted' : ''}">${m.delta > 0 ? '+' : ''}${m.delta}</span></div>`).join('') || empty('Operations stock movements will appear here.');
+  $('#overview-orders').innerHTML = state.orders.slice(0, 7).map((o) => `<div class="small-row"><span><b>${escapeHtml(o.order_id)}</b><br><small>${escapeHtml(o.customer_email)} · ${escapeHtml(o.location)} · ${date(o.created_at, o.location)}</small></span><span>${money(o.total, o.currency)}</span></div>`).join('') || empty('No orders yet.');
+  $('#overview-movements').innerHTML = state.movements.slice(0, 10).map((m) => `<div class="small-row"><span><b>${escapeHtml(m.sku)}</b> · ${escapeHtml(m.kind)}<br><small>${escapeHtml(m.location)} · ${escapeHtml(m.reference)} · ${date(m.created_at, m.location)}</small></span><span class="${m.delta < 0 ? 'muted' : ''}">${m.delta > 0 ? '+' : ''}${m.delta}</span></div>`).join('') || empty('Operations stock movements will appear here.');
 }
 
 function renderStock() {
   const location = $('#stock-location').value;
   const low = $('#stock-low').checked;
   const records = state.stock.filter((row) => (!location || row.location === location) && (!low || row.qty < 8));
-  $('#stock-rows').innerHTML = records.map((r) => `<tr><td><strong>${escapeHtml(r.name)}</strong><br><span class="muted">${escapeHtml(r.category)}</span></td><td>${escapeHtml(r.sku)}</td><td>${escapeHtml(r.location)}</td><td><span class="qty ${r.qty < 8 ? 'low' : ''}">${r.qty}</span></td><td class="muted">${date(r.updated_at)}</td></tr>`).join('') || `<tr><td colspan="5">${empty('No matching stock.')}</td></tr>`;
+  $('#stock-rows').innerHTML = records.map((r) => `<tr><td><strong>${escapeHtml(r.name)}</strong><br><span class="muted">${escapeHtml(r.category)}</span></td><td>${escapeHtml(r.sku)}</td><td>${escapeHtml(r.location)}</td><td><span class="qty ${r.qty < 8 ? 'low' : ''}">${r.qty}</span></td><td class="muted">${date(r.updated_at, r.location)}</td></tr>`).join('') || `<tr><td colspan="5">${empty('No matching stock.')}</td></tr>`;
 }
 
 function renderPurchaseOrders() {
@@ -105,7 +124,7 @@ function renderPurchaseOrders() {
       return `<div class="record-lines">${escapeHtml(item.sku)} · ${escapeHtml(item.name)} — ${item.received_qty}/${item.qty} received · ${money(item.unit_cost)} each
         ${remaining ? `<input class="inline-qty" type="number" min="0" max="${remaining}" value="${remaining}" data-po-sku="${escapeHtml(item.sku)}" aria-label="Units to receive for ${escapeHtml(item.sku)}">` : ''}</div>`;
     }).join('');
-    return `<div class="record" data-po="${escapeHtml(po.po_id)}"><div class="record-head"><div><h3>${escapeHtml(po.po_id)} · ${escapeHtml(po.supplier)}</h3><p>${escapeHtml(po.destination)} · ${date(po.created_at)}</p></div>${badge(po.status)}</div>${lines}
+    return `<div class="record" data-po="${escapeHtml(po.po_id)}"><div class="record-head"><div><h3>${escapeHtml(po.po_id)} · ${escapeHtml(po.supplier)}</h3><p>${escapeHtml(po.destination)} · ${date(po.created_at, po.destination)}${po.received_at ? ` · received ${date(po.received_at, po.destination)}` : ''}</p></div>${badge(po.status)}</div>${lines}
       ${po.status !== 'received' ? `<div class="record-actions"><button class="secondary" data-action="receive-po" data-id="${escapeHtml(po.po_id)}">Receive selected units</button></div>` : ''}</div>`;
   }).join('') || empty('No purchase orders yet.');
 }
@@ -116,11 +135,11 @@ function renderOrders() {
   $('#orders-list').innerHTML = orders.map((o) => {
     const items = o.items.map((item) => `${escapeHtml(item.qty)} × ${escapeHtml(item.name)}`).join(' · ') || 'No items';
     const canShip = o.channel === 'web' && o.status === 'completed' && o.payment_status === 'approved' && !o.shipment_id;
-    return `<div class="record" data-order="${escapeHtml(o.order_id)}"><div class="record-head"><div><h3>${escapeHtml(o.order_id)} · ${money(o.total, o.currency)}</h3><p>${escapeHtml(o.customer_email)} · ${escapeHtml(o.location)} · ${date(o.created_at)}</p></div>${badge(o.shipment_id ? o.shipping_status : o.status)}</div><div class="record-lines">${items}</div>
+    return `<div class="record" data-order="${escapeHtml(o.order_id)}"><div class="record-head"><div><h3>${escapeHtml(o.order_id)} · ${money(o.total, o.currency)}</h3><p>${escapeHtml(o.customer_email)} · ${escapeHtml(o.location)} · ${date(o.created_at, o.location)}</p></div>${badge(o.shipment_id ? o.shipping_status : o.status)}</div><div class="record-lines">${items}</div>
       <p>${escapeHtml(o.channel)} · payment ${escapeHtml(o.payment_status)}${o.tracking_number ? ` · ${escapeHtml(o.carrier)} ${escapeHtml(o.tracking_number)}` : ''}</p>
       ${canShip ? `<div class="record-actions"><select data-carrier aria-label="Carrier"><option>TinyCars Parcel</option><option>Demo Express</option><option>Store courier</option></select><input data-tracking placeholder="Tracking (optional)" aria-label="Tracking number"><button class="secondary" data-action="ship" data-id="${escapeHtml(o.order_id)}">Create shipment</button></div>` : ''}</div>`;
   }).join('') || empty('No matching orders.');
-  $('#shipments-list').innerHTML = state.shipments.map((s) => `<div class="record"><div class="record-head"><div><h3>${escapeHtml(s.shipment_id)} · ${escapeHtml(s.order_id)}</h3><p>${escapeHtml(s.carrier)} · ${escapeHtml(s.tracking_number)} · shipped ${date(s.shipped_at)}</p></div>${badge(s.status)}</div><p>${escapeHtml(s.customer_email)}${s.delivered_at ? ` · delivered ${date(s.delivered_at)}` : ''}</p>${s.status === 'shipped' ? `<div class="record-actions"><button class="secondary" data-action="deliver" data-id="${escapeHtml(s.shipment_id)}">Mark delivered</button></div>` : ''}</div>`).join('') || empty('No shipments recorded yet.');
+  $('#shipments-list').innerHTML = state.shipments.map((s) => `<div class="record"><div class="record-head"><div><h3>${escapeHtml(s.shipment_id)} · ${escapeHtml(s.order_id)}</h3><p>${escapeHtml(s.carrier)} · ${escapeHtml(s.tracking_number)} · ${escapeHtml(s.location)} · shipped ${date(s.shipped_at, s.location)}</p></div>${badge(s.status)}</div><p>${escapeHtml(s.customer_email)}${s.delivered_at ? ` · delivered ${date(s.delivered_at, s.location)}` : ''}</p>${s.status === 'shipped' ? `<div class="record-actions"><button class="secondary" data-action="deliver" data-id="${escapeHtml(s.shipment_id)}">Mark delivered</button></div>` : ''}</div>`).join('') || empty('No shipments recorded yet.');
 }
 
 function fillReturnItems() {
@@ -132,12 +151,13 @@ function renderReturns() {
   const eligible = state.orders.filter((o) => o.status === 'completed' && o.payment_status === 'approved' && o.items.length);
   $('#recent-return-orders').innerHTML = eligible.map((o) => `<option value="${escapeHtml(o.order_id)}">${escapeHtml(o.customer_email)}</option>`).join('');
   fillReturnItems();
-  $('#returns-list').innerHTML = state.returns.map((r) => `<div class="record" data-return="${escapeHtml(r.return_id)}"><div class="record-head"><div><h3>${escapeHtml(r.return_id)} · ${escapeHtml(r.name)}</h3><p>${escapeHtml(r.order_id)} · ${escapeHtml(r.customer_email)} · ${r.qty} units</p></div>${badge(r.status)}</div><p>${escapeHtml(r.reason)} · refund ${money(r.refund_amount, r.currency)} (${escapeHtml(r.refund_status)})</p>${r.restock_location ? `<p>Restocked at ${escapeHtml(r.restock_location)}</p>` : ''}
+  $('#returns-list').innerHTML = state.returns.map((r) => `<div class="record" data-return="${escapeHtml(r.return_id)}"><div class="record-head"><div><h3>${escapeHtml(r.return_id)} · ${escapeHtml(r.name)}</h3><p>${escapeHtml(r.order_id)} · ${escapeHtml(r.customer_email)} · ${r.qty} units · ${escapeHtml(r.location)} · requested ${date(r.requested_at, r.location)}</p></div>${badge(r.status)}</div><p>${escapeHtml(r.reason)} · refund ${money(r.refund_amount, r.currency)} (${escapeHtml(r.refund_status)})</p>${r.received_at ? `<p>Received ${date(r.received_at, r.restock_location || r.location)}</p>` : ''}${r.restock_location ? `<p>Restocked at ${escapeHtml(r.restock_location)}</p>` : ''}
     ${r.status === 'requested' ? `<div class="record-actions"><label><input type="checkbox" data-restock checked> Restock</label><select data-return-location aria-label="Restock location">${locationOptions(r.location === 'warehouse' ? 'warehouse' : r.location)}</select><button class="secondary" data-action="receive-return" data-id="${escapeHtml(r.return_id)}">Receive & record refund</button><button class="secondary danger" data-action="reject-return" data-id="${escapeHtml(r.return_id)}">Reject</button></div>` : ''}</div>`).join('') || empty('No returns yet.');
 }
 
 function renderAll() {
   renderOverview(); renderStock(); renderPurchaseOrders(); renderOrders(); renderReturns();
+  renderStoreClocks();
   $('#updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
 }
 
@@ -254,6 +274,8 @@ document.addEventListener('submit', async (event) => {
 });
 
 addPoLine();
+renderStoreClocks();
+setInterval(renderStoreClocks, 30000);
 if (state.token) {
   api('/summary').then(() => { $('#gate').classList.add('hidden'); $('#shell').classList.remove('hidden'); return refresh(); })
     .catch((error) => { if (state.token) gate(error.message); });

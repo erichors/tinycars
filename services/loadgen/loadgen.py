@@ -16,11 +16,11 @@ from collections import Counter
 
 import httpx
 import redis.asyncio as aioredis
+from store_hours import open_stores
 
 BASE = os.getenv("STOREFRONT_URL", "http://storefront:8080")
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 MAX_INFLIGHT = int(os.getenv("MAX_INFLIGHT", "150"))
-STORES = ["boston", "chicago", "london"]
 TERMS = ["truck", "coupe", "tank", "gold", "van", "racer", "dozer", "4x4", "classic", "army", "crane", "hatch"]
 FIRST = ["alex", "sam", "jordan", "casey", "riley", "morgan", "taylor", "jamie", "drew", "avery"]
 # Demo accounts seeded by tools/gen_catalog.py (password "tinycars"); ~30% of web shoppers sign in.
@@ -61,11 +61,14 @@ def poisson(lam: float) -> int:
 
 async def session(client: httpx.AsyncClient, web: bool):
     cart = str(uuid.uuid4())
+    open_locations = open_stores()
+    if not web and not open_locations:
+        web = True
     if web:
         channel, location = "web", "warehouse"
         currency = "GBP" if random.random() < 0.12 else "USD"
     else:
-        channel, location = "in_store", random.choice(STORES)
+        channel, location = "in_store", random.choice(open_locations)
         currency = "GBP" if location == "london" else "USD"
     headers = {}
     try:

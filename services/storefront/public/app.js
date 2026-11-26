@@ -11,6 +11,8 @@ const store = {
 const state = { products: [], cats: [], currency: store.get('tc_cur', 'USD'), user: null, favs: new Set(JSON.parse(store.get('tc_favs', '[]'))) };
 const cartId = store.get('tc_cart', null) || (() => { const id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()); store.set('tc_cart', id); return id; })();
 const LOC_NAME = { warehouse: 'Online (warehouse)', boston: 'Boston store', chicago: 'Chicago store', london: 'London store' };
+const STORE_TIMEZONES = { warehouse: 'UTC', boston: 'America/New_York', chicago: 'America/Chicago', london: 'Europe/London' };
+const orderDate = (order) => new Intl.DateTimeFormat('en-US', { timeZone: STORE_TIMEZONES[order.location] || 'UTC', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(new Date(order.created_at));
 const DEMO_USERS = [
   ['alex.rivera@example.com', 'Alex Rivera'], ['priya.patel@example.com', 'Priya Patel'], ['sam.okafor@example.com', 'Sam Okafor'],
   ['jordan.kim@example.com', 'Jordan Kim'], ['casey.nguyen@example.com', 'Casey Nguyen'], ['morgan.rossi@example.com', 'Morgan Rossi'],
@@ -419,7 +421,7 @@ async function account() {
     const orders = await api('/account/orders');
     if (!orders.length) { $('#orders').outerHTML = '<div class="empty">No purchases yet.</div>'; return; }
     $('#orders').outerHTML = `<div class="orders">${orders.map((o) => `<article class="order">
-      <header><div><b>${esc(new Date(o.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}</b><small>Order ${esc(o.order_id)}</small></div>
+      <header><div><b>${esc(orderDate(o))}</b><small>Order ${esc(o.order_id)}</small></div>
         <div><small>${o.channel === 'in_store' ? 'In store' : 'Online'}</small><b>${esc(LOC_NAME[o.location] || o.location)}</b></div>
         <div><small>Total</small><b>${money(o.total, o.currency)}</b></div>
         <span class="status ${esc(o.status)}">${o.status === 'completed' ? 'Delivered' : esc(o.status)}</span></header>

@@ -9,6 +9,19 @@ For data to survive a Postgres pod replacement, enable the chart's
 `postgres.persistence.enabled` setting. The current demo EKS deployment uses
 ephemeral Postgres storage.
 
+## Local store time
+
+Boston uses `America/New_York`, Chicago uses `America/Chicago`, and London uses
+`Europe/London`. The operations workspace shows each store's current local time
+and its 10:00–20:00 opening window. Stock, purchase, order, shipment, movement,
+and return timestamps display in the relevant location's time zone with an
+abbreviation. Shopper order history uses the order's store time too. The online
+warehouse uses UTC. PostgreSQL keeps timezone-aware timestamps so records can
+be compared across locations. The store VM agent already uses each location's
+time zone for store activity. In-cluster load generation sends in-store traffic
+only to stores that are open at the current local time; online traffic remains
+available around the clock. IANA zones handle daylight saving changes.
+
 ## Workflows
 
 1. **Inventory:** See stock at the warehouse and all three stores. Filter low
