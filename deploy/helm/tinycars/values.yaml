@@ -56,10 +56,11 @@ postgres:
 redis:
   image: redis:7-alpine
 
-# Private SNMP lab polled by the Dynatrace ActiveGate. It creates router,
-# switch, and wireless AP devices for Boston, Chicago, and London.
+# Private SNMP lab polled by the Dynatrace ActiveGate. One pod per site runs
+# nine simulated devices: router, switch, AP, firewall, server, two POS, and two handhelds.
 networkSimulator:
   enabled: false
+  sites: [boston, chicago, london]
   image: tinycars-network-sim
   tag: ""                  # empty = image.tag
   community: tinycars

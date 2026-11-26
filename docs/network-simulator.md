@@ -1,18 +1,22 @@
 # TinyCars SNMP network lab
 
-TinyCars can deploy nine private SNMPv2 devices with the application:
+TinyCars can deploy 27 private SNMPv2 devices with the application. Each site
+has its own simulator pod and nine device services:
 
 | Site | Devices |
 | --- | --- |
-| Boston | `boston-router-01`, `boston-switch-01`, `boston-ap-01` |
-| Chicago | `chicago-router-01`, `chicago-switch-01`, `chicago-ap-01` |
-| London | `london-router-01`, `london-switch-01`, `london-ap-01` |
+| Boston | `boston-router-01`, `boston-switch-01`, `boston-ap-01`, `boston-firewall-01`, `boston-server-01`, `boston-pos-01`, `boston-pos-02`, `boston-handheld-01`, `boston-handheld-02` |
+| Chicago | `chicago-router-01`, `chicago-switch-01`, `chicago-ap-01`, `chicago-firewall-01`, `chicago-server-01`, `chicago-pos-01`, `chicago-pos-02`, `chicago-handheld-01`, `chicago-handheld-02` |
+| London | `london-router-01`, `london-switch-01`, `london-ap-01`, `london-firewall-01`, `london-server-01`, `london-pos-01`, `london-pos-02`, `london-handheld-01`, `london-handheld-02` |
 
-One low-overhead pod runs all nine responders. Each device has its own
+One low-overhead pod runs the nine responders for each site. Each device has its own
 ClusterIP service on UDP/161, stable chassis/interface MAC addresses, system
 identity, location, interface state, and changing traffic counters. The
 services are intentionally private; do not expose the default SNMPv2 community
 to the internet.
+
+The server, POS terminals, and handhelds are simulated SNMP endpoints, not
+separate application containers or real payment devices.
 
 ## Deploy
 
@@ -31,7 +35,7 @@ Build and push `tinycars-network-sim` alongside the application images with
 ## Verify in Kubernetes
 
 ```bash
-kubectl -n tinycars get pod -l app.kubernetes.io/name=network-simulator
+kubectl -n tinycars get deploy -l app.kubernetes.io/name=network-simulator
 kubectl -n tinycars get svc -l app.kubernetes.io/name=network-simulator
 ```
 
@@ -43,7 +47,9 @@ inside the pod. The standard identity OID is `1.3.6.1.2.1.1.5.0` (`sysName`).
 For native network-device entities and interface metrics, install the
 **Generic network device** extension
 (`com.dynatrace.extension.snmp-generic-device`) and create a remote SNMP
-monitoring configuration for the nine service IPs.
+monitoring configuration for the 27 service IPs. If you previously configured
+the nine original devices, refresh their target IPs after upgrading because
+Kubernetes may assign new ClusterIP addresses when services are recreated.
 
 The poller must have a network path into the EKS service CIDR. A traditional
 host-based Environment ActiveGate supports SNMP extensions. A containerized

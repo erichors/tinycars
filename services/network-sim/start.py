@@ -1,4 +1,4 @@
-"""TinyCars SNMP lab: nine deterministic network devices on nine UDP ports."""
+"""TinyCars SNMP lab: one site per container, nine devices per site."""
 
 from __future__ import annotations
 
@@ -15,18 +15,32 @@ from pathlib import Path
 
 COMMUNITY = os.getenv("SNMP_COMMUNITY", "tinycars")
 BASE_PORT = int(os.getenv("SNMP_BASE_PORT", "1161"))
+SITE = os.getenv("SNMP_SITE", "boston").lower()
 
-DEVICES = (
-    ("boston-router-01", "Boston", "Edge Router", "router", 1),
-    ("boston-switch-01", "Boston", "Access Switch", "switch", 2),
-    ("boston-ap-01", "Boston", "Wireless AP", "wireless", 3),
-    ("chicago-router-01", "Chicago", "Edge Router", "router", 4),
-    ("chicago-switch-01", "Chicago", "Access Switch", "switch", 5),
-    ("chicago-ap-01", "Chicago", "Wireless AP", "wireless", 6),
-    ("london-router-01", "London", "Edge Router", "router", 7),
-    ("london-switch-01", "London", "Access Switch", "switch", 8),
-    ("london-ap-01", "London", "Wireless AP", "wireless", 9),
+SITES = ("boston", "chicago", "london")
+DEVICE_TYPES = (
+    ("router-01", "Edge Router", "router"),
+    ("switch-01", "Access Switch", "switch"),
+    ("ap-01", "Wireless AP", "wireless"),
+    ("firewall-01", "Site Firewall", "firewall"),
+    ("server-01", "Store Server", "server"),
+    ("pos-01", "POS Terminal", "pos"),
+    ("pos-02", "POS Terminal", "pos"),
+    ("handheld-01", "Handheld Scanner", "handheld"),
+    ("handheld-02", "Handheld Scanner", "handheld"),
 )
+
+
+def devices_for_site(site: str) -> tuple[tuple[str, str, str, str, int], ...]:
+    if site not in SITES:
+        raise ValueError(f"Unknown SNMP_SITE: {site}")
+    site_index = SITES.index(site)
+    devices = []
+    for index, (suffix, role, kind) in enumerate(DEVICE_TYPES):
+        # Preserve the original nine device IDs and MACs across the upgrade.
+        device_id = site_index * 3 + index + 1 if index < 3 else 10 + site_index * 6 + index - 3
+        devices.append((f"{site}-{suffix}", site.title(), role, kind, device_id))
+    return tuple(devices)
 
 
 def mac(device_id: int, interface_id: int) -> str:
@@ -40,12 +54,24 @@ def build_record(name: str, site: str, role: str, kind: str, device_id: int) -> 
     def add(oid: str, tag: str, value: object) -> None:
         rows.append((oid, tag, str(value)))
 
-    object_type = {"router": 1, "switch": 2, "wireless": 3}[kind]
-    model = {"router": "TinyRouter XR-1000", "switch": "TinySwitch XS-48", "wireless": "TinyAP AX-6"}[kind]
+    object_type = {"router": 1, "switch": 2, "wireless": 3, "firewall": 4, "server": 5, "pos": 6, "handheld": 7}[kind]
+    model = {
+        "router": "TinyRouter XR-1000",
+        "switch": "TinySwitch XS-48",
+        "wireless": "TinyAP AX-6",
+        "firewall": "TinyFirewall FW-100",
+        "server": "TinyServer Store-1",
+        "pos": "TinyPOS Register-1",
+        "handheld": "TinyScanner HH-1",
+    }[kind]
     interfaces = {
         "router": (("wan0", "TinyCars WAN uplink", 1000), ("lan0", "TinyCars site LAN", 1000), ("mgmt0", "Management", 100)),
         "switch": (("uplink0", "Router uplink", 10000), ("storefront0", "Storefront segment", 1000), ("inventory0", "Inventory segment", 1000)),
         "wireless": (("eth0", "Switch uplink", 1000), ("wlan0", "TinyCars guest Wi-Fi", 1200), ("wlan1", "TinyCars operations Wi-Fi", 1200)),
+        "firewall": (("wan0", "Router uplink", 1000), ("lan0", "Protected store LAN", 1000), ("dmz0", "Store server DMZ", 1000)),
+        "server": (("eth0", "Store LAN", 1000), ("mgmt0", "Management", 1000)),
+        "pos": (("eth0", "POS payment network", 1000), ("wlan0", "Store Wi-Fi backup", 300)),
+        "handheld": (("wlan0", "Operations Wi-Fi", 300),),
     }[kind]
 
     # SNMPv2-MIB system group.
@@ -55,7 +81,7 @@ def build_record(name: str, site: str, role: str, kind: str, device_id: int) -> 
     add("1.3.6.1.2.1.1.4.0", "4", "TinyCars Network Operations")
     add("1.3.6.1.2.1.1.5.0", "4", name)
     add("1.3.6.1.2.1.1.6.0", "4", f"{site} TinyCars showroom")
-    add("1.3.6.1.2.1.1.7.0", "2", 6 if kind == "router" else 2)
+    add("1.3.6.1.2.1.1.7.0", "2", 6 if kind in ("router", "firewall") else 72 if kind in ("server", "pos", "handheld") else 2)
 
     # IF-MIB interface table and 64-bit counters. The first MAC acts as a stable chassis identity.
     add("1.3.6.1.2.1.2.1.0", "2", len(interfaces))
@@ -119,6 +145,7 @@ class HealthHandler(BaseHTTPRequestHandler):
 
 
 def main() -> int:
+    devices = devices_for_site(SITE)
     root = Path(tempfile.mkdtemp(prefix="tinycars-snmp-"))
     stopping = False
     command = [
@@ -127,7 +154,7 @@ def main() -> int:
         "--logging-method=stderr",
     ]
 
-    for offset, device in enumerate(DEVICES):
+    for offset, device in enumerate(devices):
         data_dir = root / device[0]
         data_dir.mkdir()
         (data_dir / f"{COMMUNITY}.snmprec").write_text(build_record(*device), encoding="utf-8")
