@@ -61,6 +61,8 @@ redis:
 networkSimulator:
   enabled: false
   sites: [boston, chicago, london]
+  nodePortAccess:
+    enabled: false       # private VPC access for a host-based SNMP ActiveGate
   image: tinycars-network-sim
   tag: ""                  # empty = image.tag
   community: tinycars

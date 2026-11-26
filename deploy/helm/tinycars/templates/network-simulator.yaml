@@ -111,4 +111,32 @@ spec:
       protocol: UDP
 {{- end }}
 {{- end }}
+{{- if and .Values.networkSimulator.enabled .Values.networkSimulator.nodePortAccess.enabled }}
+{{- $devices := list "router-01" "switch-01" "ap-01" "firewall-01" "server-01" "pos-01" "pos-02" "handheld-01" "handheld-02" }}
+{{- range $siteIndex, $site := (.Values.networkSimulator.sites | default (list "boston" "chicago" "london")) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: network-snmp-{{ $site }}
+  labels:
+    app.kubernetes.io/name: network-simulator
+    app.kubernetes.io/part-of: tinycars
+    tinycars.io/site: {{ $site }}
+spec:
+  type: NodePort
+  externalTrafficPolicy: Cluster
+  selector:
+    app.kubernetes.io/name: network-simulator
+    tinycars.io/site: {{ $site }}
+  ports:
+{{- range $index, $device := $devices }}
+    - name: snmp-{{ $device }}
+      port: {{ add $.Values.networkSimulator.basePort $index }}
+      targetPort: {{ add $.Values.networkSimulator.basePort $index }}
+      nodePort: {{ add 31610 (mul $siteIndex 10) $index }}
+      protocol: UDP
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}

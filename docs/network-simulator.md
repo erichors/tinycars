@@ -108,12 +108,21 @@ monitoring configuration for the 27 service IPs. If you previously configured
 the nine original devices, refresh their target IPs after upgrading because
 Kubernetes may assign new ClusterIP addresses when services are recreated.
 
-The poller must have a network path into the EKS service CIDR. A traditional
-host-based Environment ActiveGate supports SNMP extensions. A containerized
-ActiveGate does not run ActiveGate extensions; on Kubernetes, use a supported
-Extension Execution Controller deployment when available, or run a host-based
-ActiveGate in a connected subnet. The SNMP auto-discovery extension can find
-devices but does not replace the Generic network device extension's metrics.
+The ActiveGate must have a network path to the SNMP services. A traditional
+host-based Environment ActiveGate supports SNMP extensions; the containerized
+ActiveGate installed by the Dynatrace Operator does not. For the EKS deployment,
+`networkSimulator.nodePortAccess.enabled=true` creates one NodePort service per
+site so a host-based ActiveGate in the same VPC can poll all 27 devices without
+making the SNMP community available on a public load balancer. The services use
+UDP ports `31610`–`31618` for Boston, `31620`–`31628` for Chicago, and
+`31630`–`31638` for London. In each range, the order is router, switch, AP,
+firewall, server, POS 1, POS 2, handheld 1, handheld 2. Target any EKS worker's
+private IP and the corresponding NodePort; use the matching port in each
+extension device entry. Limit the worker security group's inbound UDP access to
+the ActiveGate's security group. Node IPs may change when EKS replaces workers,
+so refresh the extension targets or put stable private routing in front of the
+workers when that happens. The SNMP auto-discovery extension can find devices
+but does not replace the Generic network device extension's metrics.
 
 The admin toggle changes SNMP responses, but a Dynatrace problem requires a
 working SNMP poller plus an alert detector for interface status, error/discard
