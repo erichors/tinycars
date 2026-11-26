@@ -30,6 +30,7 @@ SYS_LOCATION = "1.3.6.1.2.1.1.6.0"
 SYS_CONTACT = "1.3.6.1.2.1.1.4.0"
 CPU = "1.3.6.1.2.1.25.3.3.1.2.1"
 IF_BASE = "1.3.6.1.2.1.2.2.1"
+IF_X_BASE = "1.3.6.1.2.1.31.1.1.1"
 FIELDS = {"name": 2, "admin": 7, "oper": 8, "in_errors": 14, "out_errors": 20,
           "in_discards": 13, "out_discards": 19, "in_octets": 10, "out_octets": 16}
 COUNTERS = ("in_errors", "out_errors", "in_discards", "out_discards", "in_octets", "out_octets")
@@ -69,7 +70,11 @@ TARGETS = tuple(Target(site, *device) for site in SITES for device in DEVICES)
 def oid_list(count: int) -> list[str]:
     result = [SYS_NAME, SYS_DESCRIPTION, SYS_LOCATION, SYS_CONTACT, CPU]
     for index in range(1, count + 1):
-        result.extend(f"{IF_BASE}.{field}.{index}" for field in FIELDS.values())
+        for key, field in FIELDS.items():
+            if key in ("in_octets", "out_octets"):
+                result.append(f"{IF_X_BASE}.{6 if key == 'in_octets' else 10}.{index}")
+            else:
+                result.append(f"{IF_BASE}.{field}.{index}")
     return result
 
 

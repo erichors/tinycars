@@ -76,6 +76,7 @@ Each series includes `tinycars.app=tinycars`, `device.name`, `device.site`,
 `sysName` and the TinyCars description before accepting a device. Metrics use
 the `tinycars.network.*` namespace and include device availability and CPU,
 interface operational status, per-second errors/discards, and throughput.
+Throughput uses 64-bit IF-MIB counters to handle the high-volume WAN scenario.
 
 Enable with `networkPoller.enabled=true` when `networkSimulator.enabled=true`.
 The endpoint defaults to the chart's `otel.endpoint` plus `/v1/metrics`.

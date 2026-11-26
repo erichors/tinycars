@@ -14,6 +14,8 @@ class PollerTest(unittest.TestCase):
         self.assertEqual(interfaces[0]["up"], 0)
         self.assertEqual(interfaces[0]["admin_up"], 1)
         self.assertEqual(len(oid_list(1)), len(values))
+        self.assertIn("1.3.6.1.2.1.31.1.1.1.6.1", oid_list(1))
+        self.assertIn("1.3.6.1.2.1.31.1.1.1.10.1", oid_list(1))
 
     def test_counter_reset_is_not_a_negative_rate(self):
         self.assertEqual(calculate_rates({field: 20 for field in COUNTERS}, {field: 10 for field in COUNTERS}, 10),
