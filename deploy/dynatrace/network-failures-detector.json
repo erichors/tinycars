@@ -1,0 +1,53 @@
+[
+  {
+    "schemaId": "builtin:davis.anomaly-detectors",
+    "scope": "environment",
+    "value": {
+      "title": "TinyCars network interface failures",
+      "description": "Link down, errors, or discards on TinyCars SNMP simulated devices.",
+      "enabled": true,
+      "source": "Rest-API",
+      "executionSettings": {
+        "actor": null,
+        "queryOffset": null
+      },
+      "analyzer": {
+        "name": "dt.statistics.anomaly_detection.RecordAnomalyDetectionAnalyzer",
+        "input": [
+          {
+            "key": "query.expression",
+            "value": "// Returns one row for each TinyCars interface with a recent failure.\n// All simulated interfaces are administratively up.\ntimeseries {\n  link = avg(tinycars.network.interface.up),\n  errors = avg(tinycars.network.interface.in_errors_per_second),\n  discards = avg(tinycars.network.interface.in_discards_per_second)\n}, by:{device.name, device.site, if.name}, union:true, from:now()-5m, interval:1m\n| fieldsAdd link_up = arrayMin(link), error_rate = arrayMax(errors), discard_rate = arrayMax(discards)\n| fieldsRemove link, errors, discards\n| filter link_up < 0.5 or error_rate >= 2 or discard_rate >= 5\n| fields device.name, device.site, if.name, link_up, error_rate, discard_rate\n"
+          },
+          {
+            "key": "alertIdentityFields[0]",
+            "value": "device.name"
+          },
+          {
+            "key": "alertIdentityFields[1]",
+            "value": "if.name"
+          }
+        ]
+      },
+      "eventTemplate": {
+        "properties": [
+          {
+            "key": "event.type",
+            "value": "CUSTOM_ALERT"
+          },
+          {
+            "key": "event.name",
+            "value": "TinyCars network failure on {dims:device.name} {dims:if.name}"
+          },
+          {
+            "key": "event.description",
+            "value": "Site: {dims:device.site}; link up: {link_up}; inbound errors/s: {error_rate}; inbound discards/s: {discard_rate}."
+          },
+          {
+            "key": "dt.alert_group",
+            "value": "tinycars-network"
+          }
+        ]
+      }
+    }
+  }
+]

@@ -66,6 +66,36 @@ inside the pod. The standard identity OID is `1.3.6.1.2.1.1.5.0` (`sysName`).
 
 ## Dynatrace requirements
 
+### In-cluster OTLP polling
+
+On the TinyCars EKS deployment, `network-poller` reads the 27 private SNMP
+services and sends device and interface metrics to the configured OTLP endpoint.
+Each series includes `tinycars.app=tinycars`, `device.name`, `device.site`,
+`device.type`, `device.address`, `device.description`, `device.location`, and
+`device.contact`; interface series also include `if.name`. The poller checks
+`sysName` and the TinyCars description before accepting a device. Metrics use
+the `tinycars.network.*` namespace and include device availability and CPU,
+interface operational status, per-second errors/discards, and throughput.
+
+Enable with `networkPoller.enabled=true` when `networkSimulator.enabled=true`.
+The endpoint defaults to the chart's `otel.endpoint` plus `/v1/metrics`.
+This provides Dynatrace metrics with TinyCars metadata without an extension
+runner. It does **not** create native `EXT_NETWORK_DEVICE` Smartscape nodes;
+that requires the Generic network device extension described below.
+
+The [network-failures.dql](../deploy/dynatrace/network-failures.dql) query is
+ready for a single record-based Dynatrace anomaly detector. It returns one
+row per failing interface and uses the stable `device.name` plus `if.name` as
+alert identity. Use `dt.alert_group=tinycars-network` and event type
+`CUSTOM_ALERT` when creating the detector. A detector is a separate Dynatrace
+configuration: metric ingestion alone does not open a Davis problem.
+The [Settings API payload](../deploy/dynatrace/network-failures-detector.json)
+is prepared alongside the query. It needs `settings:objects:write`,
+`settings:schemas:read`, `storage:metrics:read`, and detector execution
+permission on the target environment before it can be applied.
+
+### Native network device entities
+
 For native network-device entities and interface metrics, install the
 **Generic network device** extension
 (`com.dynatrace.extension.snmp-generic-device`) and create a remote SNMP

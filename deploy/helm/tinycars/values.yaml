@@ -56,7 +56,7 @@ postgres:
 redis:
   image: redis:7-alpine
 
-# Private SNMP lab polled by the Dynatrace ActiveGate. One pod per site runs
+# Private SNMP lab. One pod per site runs
 # nine simulated devices: router, switch, AP, firewall, server, two POS, and two handhelds.
 networkSimulator:
   enabled: false
@@ -72,6 +72,20 @@ networkSimulator:
       memory: 256Mi
     limits:
       memory: 512Mi
+
+# Polls the private SNMP services and sends device/interface metrics to OTLP.
+networkPoller:
+  enabled: false
+  image: tinycars-network-poller
+  tag: ""
+  intervalSeconds: 30
+  otlpMetricsEndpoint: ""    # empty = otel.endpoint + /v1/metrics
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
 
 # One entry per service. Adding a module = add an entry (see README "Add a new service").
 services:

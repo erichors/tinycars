@@ -1,0 +1,11 @@
+// Returns one row for each TinyCars interface with a recent failure.
+// All simulated interfaces are administratively up.
+timeseries {
+  link = avg(tinycars.network.interface.up),
+  errors = avg(tinycars.network.interface.in_errors_per_second),
+  discards = avg(tinycars.network.interface.in_discards_per_second)
+}, by:{device.name, device.site, if.name}, union:true, from:now()-5m, interval:1m
+| fieldsAdd link_up = arrayMin(link), error_rate = arrayMax(errors), discard_rate = arrayMax(discards)
+| fieldsRemove link, errors, discards
+| filter link_up < 0.5 or error_rate >= 2 or discard_rate >= 5
+| fields device.name, device.site, if.name, link_up, error_rate, discard_rate

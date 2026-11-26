@@ -1,0 +1,49 @@
+{{- if and .Values.networkSimulator.enabled .Values.networkPoller.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: network-poller
+  labels:
+    app.kubernetes.io/name: network-poller
+    app.kubernetes.io/part-of: tinycars
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: network-poller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: network-poller
+        app.kubernetes.io/part-of: tinycars
+      annotations:
+        oneagent.dynatrace.com/inject: "false"
+    spec:
+      enableServiceLinks: false
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
+      containers:
+        - name: poller
+          image: "{{ .Values.image.registry }}{{ .Values.networkPoller.image }}:{{ .Values.networkPoller.tag | default .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: SNMP_NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            - name: SNMP_COMMUNITY
+              valueFrom:
+                secretKeyRef:
+                  name: tinycars-network-snmp
+                  key: community
+            - name: SNMP_POLL_INTERVAL_SECONDS
+              value: {{ .Values.networkPoller.intervalSeconds | quote }}
+            - name: OTLP_METRICS_ENDPOINT
+              value: {{ .Values.networkPoller.otlpMetricsEndpoint | default (printf "%s/v1/metrics" (trimSuffix "/" .Values.otel.endpoint)) | quote }}
+          readinessProbe:
+            exec:
+              command: ["test", "-f", "/tmp/tinycars-network-poller-ready"]
+            periodSeconds: 5
+          resources:
+{{ toYaml .Values.networkPoller.resources | indent 12 }}
+{{- end }}

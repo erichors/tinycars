@@ -29,6 +29,8 @@ UDP/161 services. The EKS deployment script enables the lab.
 The admin panel can simulate a Boston POS link failure, Chicago firewall WAN
 congestion, and London wireless errors. These faults affect SNMP telemetry,
 not actual application traffic.
+An in-cluster SNMP poller sends per-device and per-interface metrics with
+TinyCars identity metadata to the configured OTLP collector.
 
 For that existing cluster, the full build, ECR push, least-privilege Bedrock Pod Identity setup, Dynatrace namespace setup and Helm deployment are one command:
 
@@ -60,7 +62,7 @@ eksctl create cluster --name tinycars --region us-east-1 --node-type m5.xlarge -
 ### 2. Build and push images
 
 ```bash
-for s in storefront catalog cart-checkout inventory operations loadgen network-sim; do aws ecr create-repository --repository-name tinycars-$s; done
+for s in storefront catalog cart-checkout inventory operations loadgen network-sim network-poller; do aws ecr create-repository --repository-name tinycars-$s; done
 aws ecr get-login-password | docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com
 REGISTRY=<account>.dkr.ecr.<region>.amazonaws.com/ TAG=1.0.0 ./deploy/build-push.sh
 ```
