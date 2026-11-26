@@ -83,6 +83,10 @@ The endpoint defaults to the chart's `otel.endpoint` plus `/v1/metrics`.
 This provides Dynatrace metrics with TinyCars metadata without an extension
 runner. It does **not** create native `EXT_NETWORK_DEVICE` Smartscape nodes;
 that requires the Generic network device extension described below.
+These OTLP series are available in DQL and charts by their
+`tinycars.network.*` metric keys. They do not populate **Infrastructure &
+Operations > Network devices** or the device screens in **Apps**. Those screens
+require the native network Smartscape nodes from an extension or integration.
 
 The [network-failures.dql](../deploy/dynatrace/network-failures.dql) query is
 ready for a single record-based Dynatrace anomaly detector. It returns one
