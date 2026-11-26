@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-RUN pip install --no-cache-dir snmpsim==1.2.2 pysmi==1.6.2
+RUN pip install --no-cache-dir snmpsim==1.2.2 pysmi==1.6.2 'redis==5.2.*'
 
 RUN useradd --system --uid 10001 --create-home snmpsim
 WORKDIR /app

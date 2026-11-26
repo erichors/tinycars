@@ -26,8 +26,13 @@ separate application containers or real payment devices.
 | Chicago | Regional hub; busiest site | `chicago-firewall-01` WAN runs near capacity with rising packet discards and errors; CPU varies between 86% and 96%. |
 | London | Flagship store; lighter traffic | `london-ap-01` operations Wi-Fi and `london-handheld-02` report rising wireless errors and discards. |
 
-Faults are enabled by default. Set `networkSimulator.faultsEnabled=false` in
-Helm for healthy per-site baselines. The issues are SNMP telemetry simulations;
+The admin panel's **Network** problem-pattern group controls these issues live.
+Toggle a site's pattern and choose level 1–5; the corresponding SNMP simulator
+reloads its records within a few seconds. Turning it off restores the healthy
+baseline. The 24-hour random-problems schedule includes these patterns. State
+lives in Redis along with the application patterns. If Redis is unavailable,
+`networkSimulator.faultsEnabled` supplies the fallback baseline (default false).
+The issues are SNMP telemetry simulations;
 they do not inject packet loss into the storefront's real network traffic.
 
 Poll `ifOperStatus` (`1.3.6.1.2.1.2.2.1.8`), IF-MIB discards/errors
@@ -74,6 +79,10 @@ ActiveGate does not run ActiveGate extensions; on Kubernetes, use a supported
 Extension Execution Controller deployment when available, or run a host-based
 ActiveGate in a connected subnet. The SNMP auto-discovery extension can find
 devices but does not replace the Generic network device extension's metrics.
+
+The admin toggle changes SNMP responses, but a Dynatrace problem requires a
+working SNMP poller plus an alert detector for interface status, error/discard
+rates, or CPU. Check those two stages if no Dynatrace problem appears.
 
 Required platform-token scopes are:
 

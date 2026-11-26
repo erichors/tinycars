@@ -26,8 +26,9 @@ An optional [SNMP network lab](docs/network-simulator.md) runs a simulator pod
 for each store location. Each pod exposes a router, switch, access point,
 firewall, server, two POS terminals, and two handheld scanners through private
 UDP/161 services. The EKS deployment script enables the lab.
-Boston has a POS link down, Chicago has firewall congestion, and London has
-wireless errors. The faults affect SNMP telemetry, not actual application traffic.
+The admin panel can simulate a Boston POS link failure, Chicago firewall WAN
+congestion, and London wireless errors. These faults affect SNMP telemetry,
+not actual application traffic.
 
 For that existing cluster, the full build, ECR push, least-privilege Bedrock Pod Identity setup, Dynatrace namespace setup and Helm deployment are one command:
 
@@ -96,7 +97,7 @@ Postgres seeds 75 cars, per-location stock, and ~420 historical orders on first 
 Open the storefront. Click the small **wrench** that is part of the logo (it is faint until hover) to open the control room, or browse to `/admin`. Enter the token. From there:
 
 - Load: Quiet / Normal / Black Friday presets, sessions-per-minute slider, web vs in-store mix, start/stop.
-- Ten problem-pattern toggles with levels 1-5 (see `docs/patterns-and-siem.md`).
+- Application, store, AI, and network problem-pattern toggles with levels 1-5 (see `docs/patterns-and-siem.md`).
 - **Operations** opens the staff workspace for stock, supplier purchase orders,
   customer orders, demo shipments, and returns (see [operations guide](docs/operations.md)).
 

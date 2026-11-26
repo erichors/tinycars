@@ -19,6 +19,22 @@ The **Random problems — 24 hours** button builds a randomized schedule that ru
 
 Tip: raise the load first (admin panel, "Black Friday" preset) so pool and CPU patterns bite quickly.
 
+## Network patterns
+
+The **Network** group controls the SNMP simulator without a Helm upgrade.
+Each toggle affects one site and the level scales error and discard rates.
+See [network-simulator.md](network-simulator.md) for the monitored devices and
+Dynatrace SNMP extension requirements.
+
+| Pattern | Device | SNMP symptom |
+|---|---|---|
+| `network_pos_link_down` | Boston `pos-02` | Wired `ifOperStatus=down`, Wi-Fi backup stays up |
+| `network_wan_congestion` | Chicago `firewall-01` | WAN traffic, discards, errors, and CPU increase |
+| `network_wifi_interference` | London `ap-01` and `handheld-02` | Wireless errors and discards increase |
+
+An enabled toggle generates simulated SNMP symptoms. Dynatrace needs a poller
+and alert detector before it raises a problem from them.
+
 ## AI pattern
 
 | Pattern | Service | What breaks | What you should see |

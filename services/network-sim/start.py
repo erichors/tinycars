@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 import signal
 import subprocess
 import sys
@@ -16,7 +17,8 @@ from pathlib import Path
 COMMUNITY = os.getenv("SNMP_COMMUNITY", "tinycars")
 BASE_PORT = int(os.getenv("SNMP_BASE_PORT", "1161"))
 SITE = os.getenv("SNMP_SITE", "boston").lower()
-FAULTS_ENABLED = os.getenv("SNMP_FAULTS_ENABLED", "true").lower() in ("1", "true", "yes")
+FAULTS_ENABLED = os.getenv("SNMP_FAULTS_ENABLED", "false").lower() in ("1", "true", "yes")
+REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
 
 SITES = ("boston", "chicago", "london")
 SITE_PROFILES = {
@@ -49,6 +51,11 @@ ISSUES = {
         "alias": "Operations Wi-Fi - retries and loss",
     },
 }
+SITE_PATTERNS = {
+    "boston": "network_pos_link_down",
+    "chicago": "network_wan_congestion",
+    "london": "network_wifi_interference",
+}
 DEVICE_TYPES = (
     ("router-01", "Edge Router", "router"),
     ("switch-01", "Access Switch", "switch"),
@@ -79,7 +86,16 @@ def mac(device_id: int, interface_id: int) -> str:
     return f"02:54:43:{device_id:02x}:00:{interface_id:02x}".replace(":", "")
 
 
-def build_record(name: str, site: str, role: str, kind: str, device_id: int, faults_enabled: bool = True) -> str:
+def fault_level_from_flags(raw: dict[str, str], site: str) -> int:
+    """Read the site-specific admin toggle; missing or disabled means healthy."""
+    try:
+        flag = json.loads(raw.get(SITE_PATTERNS[site], "{}"))
+        return max(1, min(5, int(flag.get("level", 2)))) if flag.get("on") else 0
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return 0
+
+
+def build_record(name: str, site: str, role: str, kind: str, device_id: int, faults_enabled: bool = True, fault_level: int | None = None) -> str:
     rows: list[tuple[str, str, str]] = []
 
     def add(oid: str, tag: str, value: object) -> None:
@@ -125,8 +141,18 @@ def build_record(name: str, site: str, role: str, kind: str, device_id: int, fau
 
     # IF-MIB interface table and 64-bit counters. The first MAC acts as a stable chassis identity.
     add("1.3.6.1.2.1.2.1.0", "2", len(interfaces))
+    level = (1 if faults_enabled else 0) if fault_level is None else fault_level
     for index, (if_name, alias, speed_mbps) in enumerate(interfaces, start=1):
-        issue = ISSUES.get((site.lower(), suffix, if_name), {}) if faults_enabled else {}
+        issue = ISSUES.get((site.lower(), suffix, if_name), {}).copy() if level else {}
+        if level > 1 and site == "Boston" and suffix == "pos-02" and if_name == "wlan0":
+            issue = {"in_errors": 2 * (level - 1), "out_errors": level - 1,
+                     "alias": "POS Wi-Fi backup - retries while wired link is down"}
+        if level > 1:
+            for key in ("in_discards", "in_errors", "out_discards", "out_errors"):
+                if key in issue:
+                    issue[key] *= level
+            if "rate" in issue:
+                issue["rate"] *= level
         oper_status = issue.get("oper_status", 1)
         seed = device_id * 10_000_000 + index * 1_000_000
         rate = issue.get("rate", (device_id + index) * 4096 * traffic_scale) if oper_status == 1 else 0
@@ -162,7 +188,7 @@ def build_record(name: str, site: str, role: str, kind: str, device_id: int, fau
 
     # Host Resources CPU/memory values used by many generic SNMP profiles.
     add("1.3.6.1.2.1.25.3.3.1.1.1", "2", 1)
-    if faults_enabled and site == "Chicago" and suffix == "firewall-01":
+    if level and site == "Chicago" and suffix == "firewall-01":
         cpu_min, cpu_max = 86, 96
     cpu_mid = (cpu_min + cpu_max) // 2
     cpu_radius = (cpu_max - cpu_min) // 2
@@ -191,9 +217,25 @@ class HealthHandler(BaseHTTPRequestHandler):
 
 
 def main() -> int:
+    import redis
+
     devices = devices_for_site(SITE)
     root = Path(tempfile.mkdtemp(prefix="tinycars-snmp-"))
     stopping = False
+    client = redis.Redis.from_url(REDIS_URL, decode_responses=True, socket_connect_timeout=1, socket_timeout=1)
+
+    def current_level() -> int:
+        try:
+            return fault_level_from_flags(client.hgetall("tc:flags"), SITE)
+        except redis.RedisError:
+            return 1 if FAULTS_ENABLED else 0
+
+    def write_records(level: int) -> None:
+        for device in devices:
+            data_dir = root / device[0]
+            data_dir.mkdir(exist_ok=True)
+            (data_dir / f"{COMMUNITY}.snmprec").write_text(build_record(*device, fault_level=level), encoding="utf-8")
+
     command = [
         "snmpsim-command-responder",
         "--quiet",
@@ -202,8 +244,6 @@ def main() -> int:
 
     for offset, device in enumerate(devices):
         data_dir = root / device[0]
-        data_dir.mkdir()
-        (data_dir / f"{COMMUNITY}.snmprec").write_text(build_record(*device, faults_enabled=FAULTS_ENABLED), encoding="utf-8")
         port = BASE_PORT + offset
         command.extend(
             (
@@ -214,7 +254,10 @@ def main() -> int:
         )
         print(f"started {device[0]} ({device[1]} {device[3]}) on udp/{port}", flush=True)
 
+    level = current_level()
+    write_records(level)
     processes = [subprocess.Popen(command, text=True)]
+    print(json.dumps({"event": "NETWORK_PATTERN_APPLIED", "site": SITE, "pattern": SITE_PATTERNS[SITE], "level": level}), flush=True)
     HealthHandler.processes = processes
     server = ThreadingHTTPServer(("0.0.0.0", 8080), HealthHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -231,7 +274,19 @@ def main() -> int:
             print("an SNMP responder stopped unexpectedly", file=sys.stderr, flush=True)
             stopping = True
             break
-        time.sleep(1)
+        next_level = current_level()
+        if next_level != level:
+            processes[0].terminate()
+            try:
+                processes[0].wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                processes[0].kill()
+                processes[0].wait()
+            write_records(next_level)
+            processes[0] = subprocess.Popen(command, text=True)
+            level = next_level
+            print(json.dumps({"event": "NETWORK_PATTERN_APPLIED", "site": SITE, "pattern": SITE_PATTERNS[SITE], "level": level}), flush=True)
+        time.sleep(2)
 
     server.shutdown()
     for process in processes:

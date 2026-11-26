@@ -51,6 +51,8 @@ spec:
           env:
             - name: SNMP_SITE
               value: {{ $site | quote }}
+            - name: REDIS_URL
+              value: "redis://redis:6379/0"
             - name: SNMP_BASE_PORT
               value: {{ $.Values.networkSimulator.basePort | quote }}
             - name: SNMP_FAULTS_ENABLED
