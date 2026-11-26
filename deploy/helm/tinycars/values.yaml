@@ -82,6 +82,9 @@ networkPoller:
   tag: ""
   intervalSeconds: 30
   otlpMetricsEndpoint: ""    # empty = otel.endpoint + /v1/metrics
+  smartscapeIngest:
+    endpoint: ""           # https://<environment>.live.dynatrace.com/platform/ingest/v1/smartscape.events
+    tokenSecretName: ""    # Kubernetes Secret with a token key and Smartscape events ingest scope
   resources:
     requests:
       cpu: 50m

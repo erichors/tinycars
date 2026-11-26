@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from topology import publish_topology
+
 
 SITES = ("boston", "chicago", "london")
 DEVICES = (
@@ -32,6 +34,7 @@ SYS_LOCATION = "1.3.6.1.2.1.1.6.0"
 SYS_CONTACT = "1.3.6.1.2.1.1.4.0"
 CPU = "1.3.6.1.2.1.25.3.3.1.2.1"
 IF_BASE = "1.3.6.1.2.1.2.2.1"
+CHASSIS_MAC = f"{IF_BASE}.6.1"
 IF_X_BASE = "1.3.6.1.2.1.31.1.1.1"
 FIELDS = {"name": 2, "admin": 7, "oper": 8, "in_errors": 14, "out_errors": 20,
           "in_discards": 13, "out_discards": 19, "in_octets": 10, "out_octets": 16}
@@ -70,7 +73,7 @@ TARGETS = tuple(Target(site, *device) for site in SITES for device in DEVICES)
 
 
 def oid_list(count: int) -> list[str]:
-    result = [SYS_NAME, SYS_DESCRIPTION, SYS_LOCATION, SYS_CONTACT, CPU]
+    result = [SYS_NAME, SYS_DESCRIPTION, SYS_LOCATION, SYS_CONTACT, CPU, CHASSIS_MAC]
     for index in range(1, count + 1):
         for key, field in FIELDS.items():
             if key in ("in_octets", "out_octets"):
@@ -85,19 +88,23 @@ def to_number(value: str) -> float:
 
 
 def parse_values(target: Target, values: list[str], address: str) -> tuple[dict, list[dict]]:
-    expected = 5 + target.interfaces * len(FIELDS)
+    expected = 6 + target.interfaces * len(FIELDS)
     if len(values) != expected:
         raise ValueError(f"expected {expected} OIDs, received {len(values)}")
     sys_name, description, location, contact = (value.strip().strip('"') for value in values[:4])
     if sys_name != target.name or "TinyCars" not in description:
         raise ValueError(f"unexpected SNMP identity: {sys_name}")
+    mac_octets = values[5].strip().strip('"').split()
+    if len(mac_octets) != 6 or any(len(octet) != 2 or any(c not in "0123456789abcdefABCDEF" for c in octet) for octet in mac_octets):
+        raise ValueError("invalid chassis MAC")
+    chassis_mac = ":".join(octet.upper() for octet in mac_octets)
     common = {"tinycars.app": "tinycars", "device.name": sys_name, "device.site": target.site,
               "device.type": target.kind, "device.address": address, "device.description": description,
-              "device.location": location, "device.contact": contact}
+              "device.location": location, "device.contact": contact, "device.chassis_mac": chassis_mac}
     device = {"attrs": common, "cpu": to_number(values[4])}
     interfaces = []
     for index in range(target.interfaces):
-        row = dict(zip(FIELDS, values[5 + index * len(FIELDS):5 + (index + 1) * len(FIELDS)]))
+        row = dict(zip(FIELDS, values[6 + index * len(FIELDS):6 + (index + 1) * len(FIELDS)]))
         attrs = {**common, "if.name": row["name"].strip().strip('"')}
         interfaces.append({"attrs": attrs, "up": int(to_number(row["oper"]) == 1),
                            "admin_up": int(to_number(row["admin"]) == 1),
@@ -188,6 +195,7 @@ def main() -> None:
                 snapshots["cpu"].append((device["cpu"], device["attrs"]))
                 row = {"name": target.name, "site": target.site, "type": target.kind,
                        "address": device["attrs"]["device.address"],
+                       "chassis_mac": device["attrs"]["device.chassis_mac"],
                        "description": device["attrs"]["device.description"],
                        "location": device["attrs"]["device.location"],
                        "cpu_percent": device["cpu"], "up": True, "interfaces": []}
@@ -216,6 +224,7 @@ def main() -> None:
             latest = snapshots
             inventory["devices"] = devices
             inventory["updated_at"] = datetime.now(timezone.utc).isoformat()
+        publish_topology(devices)
         Path("/tmp/tinycars-network-poller-ready").touch()
         print(json.dumps({"event": "SNMP_POLL_COMPLETED", "devices_up": healthy, "targets": len(TARGETS)}), flush=True)
         time.sleep(max(0, interval - (time.monotonic() - started)))

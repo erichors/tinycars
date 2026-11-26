@@ -43,6 +43,16 @@ spec:
               value: {{ .Values.networkPoller.intervalSeconds | quote }}
             - name: OTLP_METRICS_ENDPOINT
               value: {{ .Values.networkPoller.otlpMetricsEndpoint | default (printf "%s/v1/metrics" (trimSuffix "/" .Values.otel.endpoint)) | quote }}
+{{- $smartscape := .Values.networkPoller.smartscapeIngest | default dict }}
+{{- if and (get $smartscape "endpoint") (get $smartscape "tokenSecretName") }}
+            - name: SMARTSCAPE_INGEST_ENDPOINT
+              value: {{ get $smartscape "endpoint" | quote }}
+            - name: SMARTSCAPE_INGEST_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ get $smartscape "tokenSecretName" | quote }}
+                  key: token
+{{- end }}
           readinessProbe:
             exec:
               command: ["test", "-f", "/tmp/tinycars-network-poller-ready"]

@@ -85,8 +85,8 @@ network-device entities.
 Enable with `networkPoller.enabled=true` when `networkSimulator.enabled=true`.
 The endpoint defaults to the chart's `otel.endpoint` plus `/v1/metrics`.
 This provides Dynatrace metrics with TinyCars metadata without an extension
-runner. It does **not** create native `EXT_NETWORK_DEVICE` Smartscape nodes;
-that requires the Generic network device extension described below.
+runner. By itself it does **not** create native `EXT_NETWORK_DEVICE` Smartscape
+nodes; enable one of the topology paths below to populate the native inventory.
 These OTLP series are available in DQL and charts by their
 `tinycars.network.*` metric keys. They do not populate **Infrastructure &
 Operations > Network devices** or the device screens in **Apps**. Those screens
@@ -103,7 +103,32 @@ is prepared alongside the query. It needs `settings:objects:write`,
 `settings:schemas:read`, `storage:metrics:read`, and detector execution
 permission on the target environment before it can be applied.
 
-### Native network device entities
+### Direct Smartscape topology from EKS
+
+The poller can send `EXT_NETWORK_DEVICE` and `EXT_NETWORK_INTERFACE` upserts
+directly to Dynatrace's Smartscape events ingest endpoint. It uses the first
+SNMP interface MAC as the stable device identity, interface name plus device
+MAC as the interface identity, and a `belongs_to` edge between them. This path
+does not need an ActiveGate extension. Supply a token with
+`openpipeline:events.smartscape:ingest` (platform token) or
+`openpipeline.events_smartscape` (classic token) through a Kubernetes Secret
+with key `token`, then set these Helm values:
+
+```yaml
+networkPoller:
+  smartscapeIngest:
+    endpoint: https://tjl16204.live.dynatrace.com/platform/ingest/v1/smartscape.events
+    tokenSecretName: tinycars-smartscape-ingest
+```
+
+The token also needs access to the `tjl16204` environment. The poller retries
+on its next 30-second cycle if ingest fails. Verify with
+`smartscapeNodes EXT_NETWORK_DEVICE | filter contains(name, "boston-")`.
+This direct path creates the inventory nodes and relationships; the existing
+`tinycars.network.*` metrics remain custom metrics and are not automatically
+linked to the native device chart dimensions.
+
+### Native network device extension
 
 For native network-device entities and interface metrics, install the
 **Generic network device** extension
