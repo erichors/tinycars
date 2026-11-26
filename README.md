@@ -25,6 +25,8 @@ An optional [SNMP network lab](docs/network-simulator.md) runs a simulator pod
 for each store location. Each pod exposes a router, switch, access point,
 firewall, server, two POS terminals, and two handheld scanners through private
 UDP/161 services. The EKS deployment script enables the lab.
+Boston has a POS link down, Chicago has firewall congestion, and London has
+wireless errors. The faults affect SNMP telemetry, not actual application traffic.
 
 For that existing cluster, the full build, ECR push, least-privilege Bedrock Pod Identity setup, Dynatrace namespace setup and Helm deployment are one command:
 

@@ -65,6 +65,7 @@ networkSimulator:
   tag: ""                  # empty = image.tag
   community: tinycars
   basePort: 1161
+  faultsEnabled: true       # false = healthy per-site traffic baselines
   resources:
     requests:
       cpu: 50m

@@ -18,6 +18,23 @@ to the internet.
 The server, POS terminals, and handhelds are simulated SNMP endpoints, not
 separate application containers or real payment devices.
 
+## Site profiles and network issues
+
+| Site | Normal traffic | Simulated issue |
+| --- | --- | --- |
+| Boston | Downtown sales; moderate traffic | `boston-pos-02` wired `eth0` is administratively up but operationally down. Its Wi-Fi backup stays up. |
+| Chicago | Regional hub; busiest site | `chicago-firewall-01` WAN runs near capacity with rising packet discards and errors; CPU varies between 86% and 96%. |
+| London | Flagship store; lighter traffic | `london-ap-01` operations Wi-Fi and `london-handheld-02` report rising wireless errors and discards. |
+
+Faults are enabled by default. Set `networkSimulator.faultsEnabled=false` in
+Helm for healthy per-site baselines. The issues are SNMP telemetry simulations;
+they do not inject packet loss into the storefront's real network traffic.
+
+Poll `ifOperStatus` (`1.3.6.1.2.1.2.2.1.8`), IF-MIB discards/errors
+(`1.3.6.1.2.1.2.2.1.13`, `.14`, `.19`, `.20`), 64-bit octets
+(`1.3.6.1.2.1.31.1.1.1.6`, `.10`), and CPU
+(`1.3.6.1.2.1.25.3.3.1.2`) to see the scenarios.
+
 ## Deploy
 
 `deploy-eks.sh` enables the simulator automatically. For a direct Helm install:

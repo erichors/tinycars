@@ -21,6 +21,11 @@ metadata:
     tinycars.io/site: {{ $site }}
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: network-simulator
@@ -48,6 +53,12 @@ spec:
               value: {{ $site | quote }}
             - name: SNMP_BASE_PORT
               value: {{ $.Values.networkSimulator.basePort | quote }}
+            - name: SNMP_FAULTS_ENABLED
+{{- if hasKey $.Values.networkSimulator "faultsEnabled" }}
+              value: {{ $.Values.networkSimulator.faultsEnabled | quote }}
+{{- else }}
+              value: "true"
+{{- end }}
             - name: SNMP_COMMUNITY
               valueFrom:
                 secretKeyRef:

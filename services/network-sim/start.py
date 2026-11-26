@@ -16,8 +16,39 @@ from pathlib import Path
 COMMUNITY = os.getenv("SNMP_COMMUNITY", "tinycars")
 BASE_PORT = int(os.getenv("SNMP_BASE_PORT", "1161"))
 SITE = os.getenv("SNMP_SITE", "boston").lower()
+FAULTS_ENABLED = os.getenv("SNMP_FAULTS_ENABLED", "true").lower() in ("1", "true", "yes")
 
 SITES = ("boston", "chicago", "london")
+SITE_PROFILES = {
+    "Boston": ("downtown sales", 2, 12, 32),
+    "Chicago": ("regional hub", 3, 20, 42),
+    "London": ("flagship store", 1, 10, 28),
+}
+# Each issue changes standard IF-MIB or Host Resources MIB values that an SNMP
+# poller can observe. Counter rates are per second; a down link stops traffic.
+ISSUES = {
+    ("boston", "pos-02", "eth0"): {"oper_status": 2, "alias": "POS wired link - down; Wi-Fi backup available"},
+    ("chicago", "firewall-01", "wan0"): {
+        "rate": 50_000_000,
+        "in_discards": 30,
+        "in_errors": 12,
+        "out_discards": 20,
+        "out_errors": 8,
+        "alias": "WAN uplink - congestion and packet loss",
+    },
+    ("london", "ap-01", "wlan1"): {
+        "in_discards": 25,
+        "in_errors": 16,
+        "out_discards": 18,
+        "out_errors": 10,
+        "alias": "Operations Wi-Fi - interference",
+    },
+    ("london", "handheld-02", "wlan0"): {
+        "in_discards": 8,
+        "in_errors": 6,
+        "alias": "Operations Wi-Fi - retries and loss",
+    },
+}
 DEVICE_TYPES = (
     ("router-01", "Edge Router", "router"),
     ("switch-01", "Access Switch", "switch"),
@@ -48,11 +79,17 @@ def mac(device_id: int, interface_id: int) -> str:
     return f"02:54:43:{device_id:02x}:00:{interface_id:02x}".replace(":", "")
 
 
-def build_record(name: str, site: str, role: str, kind: str, device_id: int) -> str:
+def build_record(name: str, site: str, role: str, kind: str, device_id: int, faults_enabled: bool = True) -> str:
     rows: list[tuple[str, str, str]] = []
 
     def add(oid: str, tag: str, value: object) -> None:
         rows.append((oid, tag, str(value)))
+
+    def add_counter(oid: str, tag: str, rate: int, initial: int = 0) -> None:
+        if rate:
+            add(oid, f"{tag}:numeric", f"rate={rate},initial={initial},increasing=1")
+        else:
+            add(oid, tag, initial)
 
     object_type = {"router": 1, "switch": 2, "wireless": 3, "firewall": 4, "server": 5, "pos": 6, "handheld": 7}[kind]
     model = {
@@ -74,20 +111,25 @@ def build_record(name: str, site: str, role: str, kind: str, device_id: int) -> 
         "handheld": (("wlan0", "Operations Wi-Fi", 300),),
     }[kind]
 
+    site_purpose, traffic_scale, cpu_min, cpu_max = SITE_PROFILES[site]
+    suffix = name.removeprefix(f"{site.lower()}-")
+
     # SNMPv2-MIB system group.
     add("1.3.6.1.2.1.1.1.0", "4", f"TinyCars {model} ({role})")
     add("1.3.6.1.2.1.1.2.0", "6", f"1.3.6.1.4.1.8072.9999.{object_type}")
     add("1.3.6.1.2.1.1.3.0", "67:numeric", f"rate=100,initial={device_id * 100000},increasing=1")
     add("1.3.6.1.2.1.1.4.0", "4", "TinyCars Network Operations")
     add("1.3.6.1.2.1.1.5.0", "4", name)
-    add("1.3.6.1.2.1.1.6.0", "4", f"{site} TinyCars showroom")
+    add("1.3.6.1.2.1.1.6.0", "4", f"{site} TinyCars showroom ({site_purpose})")
     add("1.3.6.1.2.1.1.7.0", "2", 6 if kind in ("router", "firewall") else 72 if kind in ("server", "pos", "handheld") else 2)
 
     # IF-MIB interface table and 64-bit counters. The first MAC acts as a stable chassis identity.
     add("1.3.6.1.2.1.2.1.0", "2", len(interfaces))
     for index, (if_name, alias, speed_mbps) in enumerate(interfaces, start=1):
+        issue = ISSUES.get((site.lower(), suffix, if_name), {}) if faults_enabled else {}
+        oper_status = issue.get("oper_status", 1)
         seed = device_id * 10_000_000 + index * 1_000_000
-        rate = (device_id + index) * 4096
+        rate = issue.get("rate", (device_id + index) * 4096 * traffic_scale) if oper_status == 1 else 0
         prefix = "1.3.6.1.2.1.2.2.1"
         add(f"{prefix}.1.{index}", "2", index)
         add(f"{prefix}.2.{index}", "4", if_name)
@@ -96,31 +138,35 @@ def build_record(name: str, site: str, role: str, kind: str, device_id: int) -> 
         add(f"{prefix}.5.{index}", "66", min(speed_mbps * 1_000_000, 4_294_967_295))
         add(f"{prefix}.6.{index}", "4x", mac(device_id, index))
         add(f"{prefix}.7.{index}", "2", 1)
-        add(f"{prefix}.8.{index}", "2", 1)
+        add(f"{prefix}.8.{index}", "2", oper_status)
         add(f"{prefix}.9.{index}", "67", 0)
-        add(f"{prefix}.10.{index}", "65:numeric", f"rate={rate},initial={seed},increasing=1")
-        add(f"{prefix}.11.{index}", "65:numeric", f"rate={max(rate // 800, 1)},initial={seed // 800},increasing=1")
-        add(f"{prefix}.13.{index}", "65", 0)
-        add(f"{prefix}.14.{index}", "65", 0)
-        add(f"{prefix}.16.{index}", "65:numeric", f"rate={rate * 2},initial={seed * 2},increasing=1")
-        add(f"{prefix}.17.{index}", "65:numeric", f"rate={max(rate // 400, 1)},initial={seed // 400},increasing=1")
-        add(f"{prefix}.19.{index}", "65", 0)
-        add(f"{prefix}.20.{index}", "65", 0)
+        add_counter(f"{prefix}.10.{index}", "65", rate, seed)
+        add_counter(f"{prefix}.11.{index}", "65", max(rate // 800, 1) if rate else 0, seed // 800)
+        add_counter(f"{prefix}.13.{index}", "65", issue.get("in_discards", 0))
+        add_counter(f"{prefix}.14.{index}", "65", issue.get("in_errors", 0))
+        add_counter(f"{prefix}.16.{index}", "65", rate * 2, seed * 2)
+        add_counter(f"{prefix}.17.{index}", "65", max(rate // 400, 1) if rate else 0, seed // 400)
+        add_counter(f"{prefix}.19.{index}", "65", issue.get("out_discards", 0))
+        add_counter(f"{prefix}.20.{index}", "65", issue.get("out_errors", 0))
         add(f"{prefix}.21.{index}", "66", 0)
         add(f"{prefix}.22.{index}", "6", "0.0")
 
         xprefix = "1.3.6.1.2.1.31.1.1.1"
         add(f"{xprefix}.1.{index}", "4", if_name)
-        add(f"{xprefix}.6.{index}", "70:numeric", f"rate={rate},initial={seed},increasing=1")
-        add(f"{xprefix}.10.{index}", "70:numeric", f"rate={rate * 2},initial={seed * 2},increasing=1")
+        add_counter(f"{xprefix}.6.{index}", "70", rate, seed)
+        add_counter(f"{xprefix}.10.{index}", "70", rate * 2, seed * 2)
         add(f"{xprefix}.15.{index}", "66", speed_mbps)
         add(f"{xprefix}.16.{index}", "2", 2)
         add(f"{xprefix}.17.{index}", "2", 1)
-        add(f"{xprefix}.18.{index}", "4", alias)
+        add(f"{xprefix}.18.{index}", "4", issue.get("alias", alias))
 
     # Host Resources CPU/memory values used by many generic SNMP profiles.
     add("1.3.6.1.2.1.25.3.3.1.1.1", "2", 1)
-    add("1.3.6.1.2.1.25.3.3.1.2.1", "2:numeric", f"function=variation,minimum=8,maximum={20 + device_id}")
+    if faults_enabled and site == "Chicago" and suffix == "firewall-01":
+        cpu_min, cpu_max = 86, 96
+    cpu_mid = (cpu_min + cpu_max) // 2
+    cpu_radius = (cpu_max - cpu_min) // 2
+    add("1.3.6.1.2.1.25.3.3.1.2.1", "2:numeric", f"function=sin,rate=0.05,scale={cpu_radius},offset={cpu_mid},min={cpu_min},max={cpu_max}")
     add("1.3.6.1.4.1.2021.4.5.0", "2", 524288)
     add("1.3.6.1.4.1.2021.4.6.0", "2:numeric", "function=variation,minimum=262144,maximum=458752")
 
@@ -157,7 +203,7 @@ def main() -> int:
     for offset, device in enumerate(devices):
         data_dir = root / device[0]
         data_dir.mkdir()
-        (data_dir / f"{COMMUNITY}.snmprec").write_text(build_record(*device), encoding="utf-8")
+        (data_dir / f"{COMMUNITY}.snmprec").write_text(build_record(*device, faults_enabled=FAULTS_ENABLED), encoding="utf-8")
         port = BASE_PORT + offset
         command.extend(
             (
