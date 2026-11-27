@@ -195,7 +195,10 @@ def main() -> None:
                 snapshots["cpu"].append((device["cpu"], device["attrs"]))
                 row = {"name": target.name, "site": target.site, "type": target.kind,
                        "address": device["attrs"]["device.address"],
+                       "fqdn": target.address,
+                       "ip": device["attrs"]["device.address"],
                        "chassis_mac": device["attrs"]["device.chassis_mac"],
+                       "contact": device["attrs"]["device.contact"],
                        "description": device["attrs"]["device.description"],
                        "location": device["attrs"]["device.location"],
                        "cpu_percent": device["cpu"], "up": True, "interfaces": []}

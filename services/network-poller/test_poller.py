@@ -29,6 +29,7 @@ class PollerTest(unittest.TestCase):
                                   "interfaces": [{"name": "wan0", "up": False, "admin_up": True}]}])
         self.assertEqual([event["type"] for event in events], ["EXT_NETWORK_DEVICE", "EXT_NETWORK_INTERFACE"])
         self.assertEqual(events[0]["id_components"], [{"identifier": "02:54:43:01:00:01"}])
+        self.assertEqual(events[0]["chassis_mac"], "02:54:43:01:00:01")
         self.assertEqual(events[1]["id_components"], [{"name": "wan0"}, {"device.identifier": "02:54:43:01:00:01"}])
         self.assertEqual(events[1]["static_edges"]["belongs_to"][0],
                          {"type": "EXT_NETWORK_DEVICE", "id_components": [{"identifier": "02:54:43:01:00:01"}]})

@@ -124,6 +124,13 @@ networkPoller:
 The token also needs access to the `tjl16204` environment. The poller retries
 on its next 30-second cycle if ingest fails. Verify with
 `smartscapeNodes EXT_NETWORK_DEVICE | filter contains(name, "boston-")`.
+The node events include the standard `chassis_mac`, `snmp.ip`, `fqdn`, and
+`contact` fields, so the network device inventory can identify each device.
+If the DQL returns devices but Infrastructure & Operations → Network devices
+is empty, use the Smartscape Explorer view, clear its segment and device filters,
+and check that the signed-in user has `storage:smartscape:read` and the app's
+other required Grail read permissions. Explorer Classic reads classic entities;
+direct Smartscape event ingestion does not create those entities.
 This direct path creates the inventory nodes and relationships; the existing
 `tinycars.network.*` metrics remain custom metrics and are not automatically
 linked to the native device chart dimensions.
