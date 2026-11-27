@@ -49,7 +49,8 @@ def publish_topology(devices: list[dict]) -> None:
         return
     request = urllib.request.Request(
         endpoint, data=json.dumps(events).encode(), method="POST",
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        headers={"Authorization": f"{'Api-Token' if token.startswith('dt0c') else 'Bearer'} {token}",
+                 "Content-Type": "application/json"},
     )
     try:
         with urllib.request.urlopen(request, timeout=15) as response:
